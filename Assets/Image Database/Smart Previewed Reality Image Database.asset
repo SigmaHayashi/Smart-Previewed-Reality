@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea1208cb4bfc946f7aa1d7b5348cb086, type: 3}
+  m_Name: Smart Previewed Reality Image Database
+  m_EditorClassIdentifier: 
+  m_Images:
+  - Name: Cosmos
+    Width: 0
+    Quality: 35
+    TextureGUID: 3a3337ed6e8c30048b73851c860f7c6c
+    LastModifiedTime: 2019/11/19 19:50:49
+  - Name: Fish
+    Width: 0
+    Quality: 90
+    TextureGUID: c09ff4391441e00488a64351412c05fa
+    LastModifiedTime: 2019/11/19 19:55:16
+  - Name: Flowers
+    Width: 0
+    Quality: 45
+    TextureGUID: 3e6522b89544a8440974f635480a5ae3
+    LastModifiedTime: 2019/06/04 14:11:42
+  - Name: Iki Island
+    Width: 0
+    Quality: 65
+    TextureGUID: f1aae4ceebbcddf438b49f379512b3f7
+    LastModifiedTime: 2019/11/19 19:52:15
+  m_RawData: 
+  m_IsRawDataDirty: 1
+  m_CliVersion: 1.2
