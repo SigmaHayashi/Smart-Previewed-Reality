@@ -1,0 +1,190 @@
+fileFormatVersion: 2
+guid: a10bba1b0b879b944a5610bb532c835f
+timeCreated: 1517209365
+licenseType: Free
+ModelImporter:
+  serializedVersion: 22
+  fileIDToRecycleName:
+    100000: bed_under_2
+    100002: carpet_2
+    100004: foot_2
+    100006: gray_part_2
+    100008: huton_2
+    100010: ID100
+    100012: ID118
+    100014: ID126
+    100016: ID134
+    100018: ID32
+    100020: ID38
+    100022: ID54
+    100024: instance_0
+    100026: instance_1
+    100028: instance_2
+    100030: instance_3
+    100032: instance_4
+    100034: instance_5
+    100036: instance_6
+    100038: instance_7
+    100040: instance_8
+    100042: //RootNode
+    100044: pillow_2
+    100046: skp9F80
+    100048: wood2_2
+    100050: wood_2
+    400000: bed_under_2
+    400002: carpet_2
+    400004: foot_2
+    400006: gray_part_2
+    400008: huton_2
+    400010: ID100
+    400012: ID118
+    400014: ID126
+    400016: ID134
+    400018: ID32
+    400020: ID38
+    400022: ID54
+    400024: instance_0
+    400026: instance_1
+    400028: instance_2
+    400030: instance_3
+    400032: instance_4
+    400034: instance_5
+    400036: instance_6
+    400038: instance_7
+    400040: instance_8
+    400042: //RootNode
+    400044: pillow_2
+    400046: skp9F80
+    400048: wood2_2
+    400050: wood_2
+    2100000: white
+    2100002: gray
+    2100004: mat1
+    2100006: huton
+    2100008: ehe
+    2100010: wood
+    2300000: bed_under_2
+    2300002: carpet_2
+    2300004: foot_2
+    2300006: gray_part_2
+    2300008: huton_2
+    2300010: ID100
+    2300012: ID118
+    2300014: ID126
+    2300016: ID134
+    2300018: ID32
+    2300020: ID38
+    2300022: ID54
+    2300024: pillow_2
+    2300026: wood2_2
+    2300028: wood_2
+    3300000: bed_under_2
+    3300002: carpet_2
+    3300004: foot_2
+    3300006: gray_part_2
+    3300008: huton_2
+    3300010: ID100
+    3300012: ID118
+    3300014: ID126
+    3300016: ID134
+    3300018: ID32
+    3300020: ID38
+    3300022: ID54
+    3300024: pillow_2
+    3300026: wood2_2
+    3300028: wood_2
+    4300000: bed_under_2
+    4300002: carpet_2
+    4300004: foot_2
+    4300006: ID32
+    4300008: ID38
+    4300010: gray_part_2
+    4300012: ID54
+    4300014: huton_2
+    4300016: pillow_2
+    4300018: wood_2
+    4300020: ID100
+    4300022: wood2_2
+    4300024: ID118
+    4300026: ID126
+    4300028: ID134
+  externalObjects: {}
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 0.0254
+    meshCompression: 0
+    addColliders: 0
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 0
+    importLights: 0
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
