@@ -5,15 +5,33 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.EventSystems;
 using System.IO;
-using System.Linq;
+
+public enum CanvasName {
+	Error = -1,
+	MainCanvas = 0,
+	CalibrationCanvas = 1,
+	MyConsoleCanvas = 2,
+	InformationCanvas = 3,
+	SettingsCanvas = 4
+}
 
 public class MainScript : MonoBehaviour {
 
 	//画面が消えないようにする
-	private bool ScreenNOTSleep = true;
+	private bool screen_not_sleep = true;
 
 	//キャプチャモードかどうか
 	private bool capture_mode = false;
+
+	//Startの処理がすべて終わったかどうか
+	private bool finish_start_all = false;
+	public bool FinishStartAll() { return finish_start_all; }
+
+	//コンフィグデータ
+	private SmartPreviewedRealityConfig config_data;
+	public SmartPreviewedRealityConfig GetConfig() { return config_data; }
+	private bool finish_read_config = false;
+	public bool FinishReadConfig() { return finish_read_config; }
 
 	//Canvasたち
 	private MainCanvasManager MainCanvas;
@@ -23,33 +41,24 @@ public class MainScript : MonoBehaviour {
 	private SettingsCanvasManager SettingsCanvas;
 
 	//どのキャンバスを使用中か示す変数と対応する辞書
-	private int ActiveCanvas = -1;
+	private int active_canvas = -1;
 	private Dictionary<int, GameObject> CanvasDictionary = new Dictionary<int, GameObject>();
 
-	public enum CanvasName {
-		Error = -1,
-		MainCanvas = 0,
-		CalibrationCanvas = 1,
-		MyConsoleCanvas = 2,
-		InformationCanvas = 3,
-		SettingsCanvas = 4
-	}
-
 	//Main Canvasのバッファ
-	private string Main_InfoText_Buffer;
+	private string main_info_text_buffer;
 
 	//Calibration Canvasのバッファ
-	private string Calibration_OffsetInfoText_Buffer;
-	private string Calibration_DeviceInfoText_Buffer;
-	private string Calibration_CameraInfoText_Buffer;
+	private string calibration_offsetinfo_text_buffer;
+	private string calibration_deviceinfo_text_buffer;
+	private string calibration_camerainfo_text_buffer;
 
 	//MyConsole Canvasのバッファ
 	private List<object> MyConsole_Message_Buffer = new List<object>();
-	private bool MyConsole_Delete_Buffer = false;
+	private bool myconsole_delete_buffer = false;
 
 	//Information Canvasのバッファ
-	private string Information_ViconIrvsmarkerText_Buffer;
-	private string Information_ViconSmartPalText_Buffer;
+	private string information_vicon_irvsmarker_text_buffer;
+	private string information_vicon_smartpal_text_buffer;
 
 
 	/**************************************************
@@ -57,7 +66,7 @@ public class MainScript : MonoBehaviour {
 	 **************************************************/
 	void Start() {
 		// 画面が消えないようにする
-		if (ScreenNOTSleep) {
+		if (screen_not_sleep) {
 			Screen.sleepTimeout = SleepTimeout.NeverSleep;
 		}
 		else {
@@ -88,6 +97,55 @@ public class MainScript : MonoBehaviour {
 		if (Input.GetKey(KeyCode.Escape)) {
 			Application.Quit();
 		}
+
+		// キャプチャモードON/OFF切り替え
+		if(Application.platform == RuntimePlatform.Android) { // Android
+			if (Input.touchCount >= 5 && WhichCanvasActive() == (int)CanvasName.MainCanvas) { // Main Canvasのときに5本指タッチ
+				Touch touch = Input.GetTouch(Input.touchCount - 1);
+				if (touch.phase == TouchPhase.Began) {
+					capture_mode = !capture_mode;
+					if (capture_mode) {
+						MainCanvas.gameObject.SetActive(false);
+					}
+					else {
+						MainCanvas.gameObject.SetActive(true);
+					}
+				}
+			}
+		}
+		else if(Application.isEditor){ // エディタ
+			if (Input.GetMouseButtonDown(1) && WhichCanvasActive() == (int)CanvasName.MainCanvas) { // 右クリック
+				capture_mode = !capture_mode;
+				if (capture_mode) {
+					MainCanvas.gameObject.SetActive(false);
+				}
+				else {
+					MainCanvas.gameObject.SetActive(true);
+				}
+			}
+		}
+
+		if (!finish_read_config && SettingsCanvas.FinishStart()) {
+			config_data = SettingsCanvas.GetConfig();
+			screen_not_sleep = config_data.screen_not_sleep;
+			finish_read_config = true;
+		}
+
+		if(!finish_start_all && 
+			MainCanvas.FinishStart() &&
+			CalibrationCanvas.FinishStart() &&
+			MyConsoleCanvas.FinishStart() &&
+			InformationCanvas.FinishStart() &&
+			SettingsCanvas.FinishStart()) {
+			foreach(KeyValuePair<int, GameObject> canvas in CanvasDictionary) {
+				if (canvas.Key != (int)CanvasName.MainCanvas) {
+					canvas.Value.SetActive(false);
+				}
+			}
+			active_canvas = (int)CanvasName.MainCanvas;
+
+			finish_start_all = true;
+		}
 	}
 
 
@@ -95,127 +153,130 @@ public class MainScript : MonoBehaviour {
 	 * どのCanvasを使用中か返す
 	 **************************************************/
 	public int WhichCanvasActive() {
-		return ActiveCanvas;
+		return active_canvas;
 	}
 
 	/**************************************************
 	 * 画面の切り替え：Main Canvas
 	 **************************************************/
-	public void ChageToMainCanvas() {
-		CanvasDictionary[ActiveCanvas].SetActive(false);
-		ActiveCanvas = (int)CanvasName.MainCanvas;
-		CanvasDictionary[ActiveCanvas].SetActive(true);
+	public void ChageToMain() {
+		CanvasDictionary[active_canvas].SetActive(false);
+		active_canvas = (int)CanvasName.MainCanvas;
+		CanvasDictionary[active_canvas].SetActive(true);
 
-		if (Main_InfoText_Buffer != null) {
-			//MainCanvas.PushBuffer_InfoText(Main_InfoText_Buffer);
-			Main_InfoText_Buffer = null;
+		if (main_info_text_buffer != null) {
+			MainCanvas.Change_InfoText(main_info_text_buffer);
+			main_info_text_buffer = null;
 		}
 	}
 
 	/**************************************************
 	 * バッファ更新：Main Canvas
 	 **************************************************/
-	public void Main_UpdateBuffer_InfoText(string InfoText_string) {
-		Main_InfoText_Buffer = InfoText_string;
+	public void Main_UpdateBuffer_InfoText(string message) {
+		main_info_text_buffer = message;
 	}
 
 	/**************************************************
 	 * 画面の切り替え：Calibration Canvas
 	 **************************************************/
-	public void ChageToCalibrationCanvas() {
-		CanvasDictionary[ActiveCanvas].SetActive(false);
-		ActiveCanvas = (int)CanvasName.CalibrationCanvas;
-		CanvasDictionary[ActiveCanvas].SetActive(true);
+	public void ChageToCalibration() {
+		CanvasDictionary[active_canvas].SetActive(false);
+		active_canvas = (int)CanvasName.CalibrationCanvas;
+		CanvasDictionary[active_canvas].SetActive(true);
 
-		if (Calibration_OffsetInfoText_Buffer != null) {
-			//CalibrationCanvas.PushBuffer_OffsetInfoText(Calibration_OffsetInfoText_Buffer);
-			Calibration_OffsetInfoText_Buffer = null;
+		if (calibration_offsetinfo_text_buffer != null) {
+			CalibrationCanvas.Change_OffsetInfoText(calibration_offsetinfo_text_buffer);
+			calibration_offsetinfo_text_buffer = null;
 		}
-		if (Calibration_DeviceInfoText_Buffer != null) {
-			//CalibrationCanvas.PushBuffer_DeviceInfoText(Calibration_DeviceInfoText_Buffer);
-			Calibration_DeviceInfoText_Buffer = null;
+		if (calibration_deviceinfo_text_buffer != null) {
+			CalibrationCanvas.Change_DeviceInfoText(calibration_deviceinfo_text_buffer);
+			calibration_deviceinfo_text_buffer = null;
 		}
-		if (Calibration_CameraInfoText_Buffer != null) {
-			//CalibrationCanvas.PushBuffer_CameraInfoText(Calibration_CameraInfoText_Buffer);
-			Calibration_CameraInfoText_Buffer = null;
+		if (calibration_camerainfo_text_buffer != null) {
+			CalibrationCanvas.Change_CameraInfoText(calibration_camerainfo_text_buffer);
+			calibration_camerainfo_text_buffer = null;
 		}
 	}
 
 	/**************************************************
 	 * バッファ更新：Calibration Canvas
 	 **************************************************/
-	public void Calibration_UpdateBuffer_OffsetInfoText(string OffsetInfoText_string) {
-		Calibration_OffsetInfoText_Buffer = OffsetInfoText_string;
+	public void Calibration_UpdateBuffer_OffsetInfoText(string message) {
+		calibration_offsetinfo_text_buffer = message;
 	}
 
-	public void Calibration_UpdateBuffer_DeviceInfoText(string DeviceInfoText_string) {
-		Calibration_DeviceInfoText_Buffer = DeviceInfoText_string;
+	public void Calibration_UpdateBuffer_DeviceInfoText(string message) {
+		calibration_deviceinfo_text_buffer = message;
 	}
 
-	public void Calibration_UpdateBuffer_CameraInfoText(string CameraInfoText_string) {
-		Calibration_CameraInfoText_Buffer = CameraInfoText_string;
+	public void Calibration_UpdateBuffer_CameraInfoText(string message) {
+		calibration_camerainfo_text_buffer = message;
 	}
 
 	/**************************************************
 	 * 画面の切り替え：MyConsole Canvas
 	 **************************************************/
-	public void ChangeToMyConsoleCanvas() {
-		CanvasDictionary[ActiveCanvas].SetActive(false);
-		ActiveCanvas = (int)CanvasName.MyConsoleCanvas;
-		CanvasDictionary[ActiveCanvas].SetActive(true);
+	public void ChangeToMyConsole() {
+		CanvasDictionary[active_canvas].SetActive(false);
+		active_canvas = (int)CanvasName.MyConsoleCanvas;
+		CanvasDictionary[active_canvas].SetActive(true);
 
-		if (MyConsole_Delete_Buffer) {
-			//MyConsoleCanvas.PushBuffer_Delete();
-			MyConsole_Delete_Buffer = false;
+		if (myconsole_delete_buffer) {
+			MyConsoleCanvas.Delete();
+			myconsole_delete_buffer = false;
 		}
-		if (MyConsole_Message_Buffer.Count() > 0) {
-			//MyConsoleCanvas.PushBuffer_Message(MyConsole_Message_Buffer);
-			MyConsole_Message_Buffer = new List<object>();
-		}
+		MyConsoleCanvas.Add(MyConsole_Message_Buffer);
+		MyConsole_Message_Buffer = new List<object>();
 	}
 
 	/**************************************************
 	 * バッファ更新：MyConsole Canvas
 	 **************************************************/
 	public void MyConsole_UpdateBuffer_Delete() {
-		MyConsole_Delete_Buffer = true;
+		myconsole_delete_buffer = true;
+		MyConsole_Message_Buffer = new List<object>();
 	}
 
-	public void MyConsole_UpdateBuffer_Message(object Message_object) {
-		MyConsole_Message_Buffer.Add(Message_object);
+	public void MyConsole_UpdateBuffer_Message(object message) {
+		MyConsole_Message_Buffer.Add(message);
 	}
 
 	/**************************************************
 	 * 画面の切り替え：Information Canvas
 	 **************************************************/
 	public void ChangeToInformation() {
-		CanvasDictionary[ActiveCanvas].SetActive(false);
-		ActiveCanvas = (int)CanvasName.InformationCanvas;
-		CanvasDictionary[ActiveCanvas].SetActive(true);
+		CanvasDictionary[active_canvas].SetActive(false);
+		active_canvas = (int)CanvasName.InformationCanvas;
+		CanvasDictionary[active_canvas].SetActive(true);
 
-		if (Information_ViconIrvsmarkerText_Buffer != null) {
-			//InformationCanvas.PushBuffer_ViconIrvsMarkerText(Information_ViconIrvsmarkerText_Buffer);
-			Information_ViconIrvsmarkerText_Buffer = null;
+		if (information_vicon_irvsmarker_text_buffer != null) {
+			InformationCanvas.Change_Vicon_IrvsMarkerInfoText(information_vicon_irvsmarker_text_buffer);
+			information_vicon_irvsmarker_text_buffer = null;
 		}
-		if (Information_ViconSmartPalText_Buffer != null) {
-			//InformationCanvas.PushBuffer_ViconSmartPalText(Information_ViconSmartPalText_Buffer);
-			Information_ViconSmartPalText_Buffer = null;
+		if (information_vicon_smartpal_text_buffer != null) {
+			InformationCanvas.Change_Vicon_SmartPalInfoText(information_vicon_smartpal_text_buffer);
+			information_vicon_smartpal_text_buffer = null;
 		}
 	}
 
 	/**************************************************
 	 * バッファ更新：Information Canvas
 	 **************************************************/
-	public void Information_UpdateBuffer_ViconIrvsMarkerText(string ViconIrvsMarkerText_string) {
-		Information_ViconIrvsmarkerText_Buffer = ViconIrvsMarkerText_string;
+	public void Information_UpdateBuffer_ViconIrvsMarkerText(string message) {
+		information_vicon_irvsmarker_text_buffer = message;
+	}
+
+	public void Information_UpdateBuffer_ViconSmartPalText(string message) {
+		information_vicon_smartpal_text_buffer = message;
 	}
 
 	/**************************************************
 	 * 画面の切り替え：Settings Canvas
 	 **************************************************/
 	public void ChangeToSettings() {
-		CanvasDictionary[ActiveCanvas].SetActive(false);
-		ActiveCanvas = (int)CanvasName.SettingsCanvas;
-		CanvasDictionary[ActiveCanvas].SetActive(true);
+		CanvasDictionary[active_canvas].SetActive(false);
+		active_canvas = (int)CanvasName.SettingsCanvas;
+		CanvasDictionary[active_canvas].SetActive(true);
 	}
 }

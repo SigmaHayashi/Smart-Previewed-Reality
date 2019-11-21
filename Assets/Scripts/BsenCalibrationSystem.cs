@@ -23,11 +23,11 @@ public class BsenCalibrationSystem : MonoBehaviour {
 
 	//AugmentedImageでつかうものたち
 	private List<AugmentedImage> m_AugmentedImages = new List<AugmentedImage>();
-	private bool detected_marker = false;
+	//private bool detected_marker = false;
 	private AugmentedImage marker_image;
 	
 	private bool finish_calibration = false;
-	private int calibration_state = 0;
+	//private int calibration_state = 0;
 
 	public bool CheckFinishCalibration() {
 		return finish_calibration;
@@ -40,6 +40,7 @@ public class BsenCalibrationSystem : MonoBehaviour {
 	// Start is called before the first frame update
 	// 最初の1回呼び出されるよ～
 	void Start() {
+		/*
 		mainSystem = GameObject.Find("Main System").GetComponent<MainScript>();
 
 		arcore_device = GameObject.Find("ARCore Device");
@@ -54,6 +55,7 @@ public class BsenCalibrationSystem : MonoBehaviour {
 		calibration_state = 1;
 
 		DBAdapter = GameObject.Find("Database Adapter").GetComponent<TMSDatabaseAdapter>();
+		*/
 	}
 
 	// Update is called once per frame

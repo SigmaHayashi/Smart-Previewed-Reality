@@ -211,7 +211,7 @@ public class AndroidRosSocketClient : MonoBehaviour {
 	private List<string[]> namesService, namesPubTopic, namesSubTopic;
 
 	private MainScript mainSystem;
-	private bool finish_set_address = false;
+	//private bool finish_set_address = false;
 
 	//*****************************************
 	// function to be run first

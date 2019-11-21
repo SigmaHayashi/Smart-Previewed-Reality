@@ -17,9 +17,9 @@ public class SmartPalControll : MonoBehaviour {
 
 	//データベースと通信するやつ
 	private TMSDatabaseAdapter DBAdapter;
-	private float time_pos = 0.0f;
-	private float time_bat = 0.0f;
-	bool finish_battery_text = false;
+	//private float time_pos = 0.0f;
+	//private float time_bat = 0.0f;
+	//bool finish_battery_text = false;
 	GameObject Battery_3DText;
 	
 	//キャリブシステム
