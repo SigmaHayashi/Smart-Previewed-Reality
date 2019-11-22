@@ -13,7 +13,7 @@ public class MyConsoleCanvasManager : MonoBehaviour {
 
 	//スクロールコンテンツの要素
 	private RectTransform ScrollContentsRect;
-	private GameObject ContentsObject;
+	private GameObject ContentsPrefab;
 	private GameObject ContentsParent;
 	private RectTransform ScrollViewRect;
 
@@ -21,16 +21,12 @@ public class MyConsoleCanvasManager : MonoBehaviour {
 	private bool finish_start = false;
 	public bool FinishStart() { return finish_start; }
 
-	//テスト用
-	private Button TestButton;
-	void AddTest() {
-		Add("Test Message");
-	}
-
-	//更新を止めるやつ
-	private Button StopButton;
+	//UI
+	private Button DeleteButton;
+	private Toggle PauseToggle;
 	private List<object> MessageList = new List<object>();
-	private bool stop = false;
+	private bool pause = false;
+	private bool pause_delete = false;
 
 
 	// Start is called before the first frame update
@@ -44,15 +40,16 @@ public class MyConsoleCanvasManager : MonoBehaviour {
 
 		//スクロールコンテンツの要素を取得
 		ScrollContentsRect = GameObject.Find("Main System/MyConsole Canvas/Horizontal_0/Info Area/Horizontal_0/Scroll View/Scroll Contents").GetComponent<RectTransform>();
-		ContentsObject = GameObject.Find("Main System/MyConsole Canvas/Horizontal_0/Info Area/Horizontal_0/Scroll View/Scroll Contents/Text");
+		ContentsPrefab = (GameObject)Resources.Load("Contents Text");
 		ContentsParent = GameObject.Find("Main System/MyConsole Canvas/Horizontal_0/Info Area/Horizontal_0/Scroll View/Scroll Contents");
 		ScrollViewRect = GameObject.Find("Main System/MyConsole Canvas/Horizontal_0/Info Area/Horizontal_0/Scroll View").GetComponent<RectTransform>();
 		
-		StopButton = GameObject.Find("Main System/MyConsole Canvas/Horizontal_0/Vertical_0/Stop Button").GetComponent<Button>();
-		StopButton.onClick.AddListener(Stop);
+		DeleteButton = GameObject.Find("Main System/MyConsole Canvas/Horizontal_0/Vertical_0/Delete Button").GetComponent<Button>();
+		DeleteButton.onClick.AddListener(Delete);
 
-		TestButton = GameObject.Find("Main System/MyConsole Canvas/Horizontal_0/Vertical_0/Button").GetComponent<Button>();
-		TestButton.onClick.AddListener(AddTest);
+		PauseToggle = GameObject.Find("Main System/MyConsole Canvas/Horizontal_0/Vertical_0/Horizontal_0/Pause Toggle").GetComponent<Toggle>();
+		PauseToggle.isOn = false;
+		PauseToggle.onValueChanged.AddListener(Pause);
 
 		finish_start = true;
 	}
@@ -73,9 +70,9 @@ public class MyConsoleCanvasManager : MonoBehaviour {
 	 * テキストを追加
 	 **************************************************/
 	public void Add(object message) {
-		if (!stop) {
-			GameObject NewObject = Instantiate(ContentsObject);
-			NewObject.transform.SetParent(ContentsParent.transform);
+		if (!pause) {
+			GameObject NewObject = Instantiate(ContentsPrefab);
+			NewObject.transform.SetParent(ContentsParent.transform, false);
 			NewObject.transform.localScale = new Vector3(1, 1, 1);
 			NewObject.GetComponent<Text>().text = message.ToString();
 		}
@@ -97,21 +94,30 @@ public class MyConsoleCanvasManager : MonoBehaviour {
 	 * テキストを削除
 	 **************************************************/
 	public void Delete() {
-		Transform children = ContentsParent.GetComponentInChildren<Transform>();
-		foreach(Transform child in children) {
-			Destroy(child.gameObject);
+		if (!pause) {
+			Transform children = ContentsParent.GetComponentInChildren<Transform>();
+			foreach (Transform child in children) {
+				Destroy(child.gameObject);
+			}
+		}
+		else {
+			pause_delete = true;
+			MessageList = new List<object>();
 		}
 	}
 
 	/**************************************************
 	 * テキスト更新を一時停止
 	 **************************************************/
-	void Stop() {
-		stop = !stop;
-		if (!stop) {
-			foreach(object message in MessageList) {
-				Add(message);
-			}
+	void Pause(bool b) {
+		pause = b;
+		if (pause_delete) {
+			Delete();
+			pause_delete = false;
+		}
+		if (!pause) {
+			Add(MessageList);
+			MessageList = new List<object>();
 		}
 	}
 }

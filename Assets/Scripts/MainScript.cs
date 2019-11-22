@@ -41,8 +41,8 @@ public class MainScript : MonoBehaviour {
 	private SettingsCanvasManager SettingsCanvas;
 
 	//どのキャンバスを使用中か示す変数と対応する辞書
-	private int active_canvas = -1;
-	private Dictionary<int, GameObject> CanvasDictionary = new Dictionary<int, GameObject>();
+	private CanvasName active_canvas = CanvasName.Error;
+	private Dictionary<CanvasName, GameObject> CanvasDictionary = new Dictionary<CanvasName, GameObject>();
 
 	//Main Canvasのバッファ
 	private string main_info_text_buffer;
@@ -81,11 +81,11 @@ public class MainScript : MonoBehaviour {
 		SettingsCanvas = GameObject.Find("Main System/Settings Canvas").GetComponent<SettingsCanvasManager>();
 
 		//CanvasをDictionaryに追加
-		CanvasDictionary.Add((int)CanvasName.MainCanvas, MainCanvas.gameObject);
-		CanvasDictionary.Add((int)CanvasName.CalibrationCanvas, CalibrationCanvas.gameObject);
-		CanvasDictionary.Add((int)CanvasName.MyConsoleCanvas, MyConsoleCanvas.gameObject);
-		CanvasDictionary.Add((int)CanvasName.InformationCanvas, InformationCanvas.gameObject);
-		CanvasDictionary.Add((int)CanvasName.SettingsCanvas, SettingsCanvas.gameObject);
+		CanvasDictionary.Add(CanvasName.MainCanvas, MainCanvas.gameObject);
+		CanvasDictionary.Add(CanvasName.CalibrationCanvas, CalibrationCanvas.gameObject);
+		CanvasDictionary.Add(CanvasName.MyConsoleCanvas, MyConsoleCanvas.gameObject);
+		CanvasDictionary.Add(CanvasName.InformationCanvas, InformationCanvas.gameObject);
+		CanvasDictionary.Add(CanvasName.SettingsCanvas, SettingsCanvas.gameObject);
 	}
 
 
@@ -100,7 +100,7 @@ public class MainScript : MonoBehaviour {
 
 		// キャプチャモードON/OFF切り替え
 		if(Application.platform == RuntimePlatform.Android) { // Android
-			if (Input.touchCount >= 5 && WhichCanvasActive() == (int)CanvasName.MainCanvas) { // Main Canvasのときに5本指タッチ
+			if (Input.touchCount >= 5 && WhichCanvasActive() == CanvasName.MainCanvas) { // Main Canvasのときに5本指タッチ
 				Touch touch = Input.GetTouch(Input.touchCount - 1);
 				if (touch.phase == TouchPhase.Began) {
 					capture_mode = !capture_mode;
@@ -114,7 +114,7 @@ public class MainScript : MonoBehaviour {
 			}
 		}
 		else if(Application.isEditor){ // エディタ
-			if (Input.GetMouseButtonDown(1) && WhichCanvasActive() == (int)CanvasName.MainCanvas) { // 右クリック
+			if (Input.GetMouseButtonDown(1) && WhichCanvasActive() == CanvasName.MainCanvas) { // 右クリック
 				capture_mode = !capture_mode;
 				if (capture_mode) {
 					MainCanvas.gameObject.SetActive(false);
@@ -137,12 +137,12 @@ public class MainScript : MonoBehaviour {
 			MyConsoleCanvas.FinishStart() &&
 			InformationCanvas.FinishStart() &&
 			SettingsCanvas.FinishStart()) {
-			foreach(KeyValuePair<int, GameObject> canvas in CanvasDictionary) {
-				if (canvas.Key != (int)CanvasName.MainCanvas) {
+			foreach(KeyValuePair<CanvasName, GameObject> canvas in CanvasDictionary) {
+				if (canvas.Key != CanvasName.MainCanvas) {
 					canvas.Value.SetActive(false);
 				}
 			}
-			active_canvas = (int)CanvasName.MainCanvas;
+			active_canvas = CanvasName.MainCanvas;
 
 			finish_start_all = true;
 		}
@@ -152,7 +152,7 @@ public class MainScript : MonoBehaviour {
 	/**************************************************
 	 * どのCanvasを使用中か返す
 	 **************************************************/
-	public int WhichCanvasActive() {
+	public CanvasName WhichCanvasActive() {
 		return active_canvas;
 	}
 
@@ -161,7 +161,7 @@ public class MainScript : MonoBehaviour {
 	 **************************************************/
 	public void ChageToMain() {
 		CanvasDictionary[active_canvas].SetActive(false);
-		active_canvas = (int)CanvasName.MainCanvas;
+		active_canvas = CanvasName.MainCanvas;
 		CanvasDictionary[active_canvas].SetActive(true);
 
 		if (main_info_text_buffer != null) {
@@ -182,7 +182,7 @@ public class MainScript : MonoBehaviour {
 	 **************************************************/
 	public void ChageToCalibration() {
 		CanvasDictionary[active_canvas].SetActive(false);
-		active_canvas = (int)CanvasName.CalibrationCanvas;
+		active_canvas = CanvasName.CalibrationCanvas;
 		CanvasDictionary[active_canvas].SetActive(true);
 
 		if (calibration_offsetinfo_text_buffer != null) {
@@ -219,7 +219,7 @@ public class MainScript : MonoBehaviour {
 	 **************************************************/
 	public void ChangeToMyConsole() {
 		CanvasDictionary[active_canvas].SetActive(false);
-		active_canvas = (int)CanvasName.MyConsoleCanvas;
+		active_canvas = CanvasName.MyConsoleCanvas;
 		CanvasDictionary[active_canvas].SetActive(true);
 
 		if (myconsole_delete_buffer) {
@@ -247,7 +247,7 @@ public class MainScript : MonoBehaviour {
 	 **************************************************/
 	public void ChangeToInformation() {
 		CanvasDictionary[active_canvas].SetActive(false);
-		active_canvas = (int)CanvasName.InformationCanvas;
+		active_canvas = CanvasName.InformationCanvas;
 		CanvasDictionary[active_canvas].SetActive(true);
 
 		if (information_vicon_irvsmarker_text_buffer != null) {
@@ -276,7 +276,7 @@ public class MainScript : MonoBehaviour {
 	 **************************************************/
 	public void ChangeToSettings() {
 		CanvasDictionary[active_canvas].SetActive(false);
-		active_canvas = (int)CanvasName.SettingsCanvas;
+		active_canvas = CanvasName.SettingsCanvas;
 		CanvasDictionary[active_canvas].SetActive(true);
 	}
 }

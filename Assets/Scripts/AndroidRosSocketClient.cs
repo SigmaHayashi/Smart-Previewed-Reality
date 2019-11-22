@@ -6,10 +6,18 @@ using WebSocketSharp;
 using System.Text;
 using System.Collections.Generic;
 
+/*
 public class wscCONST {
 	public const int STATE_DISCONNECTED = 0;
 	public const int STATE_CONNECTED = 1;
 	public const int STATE_ERROR = -1;
+}
+*/
+
+public enum WSCState {
+	Disconnected = 0,
+	Connected = 1,
+	Error = -1
 }
 
 [Serializable]
@@ -26,11 +34,11 @@ public class ServiceCallDB {
 
 [Serializable]
 public class TmsDBReq {
-	public tmsdb tmsdb;
+	public TmsDB tmsdb;
 }
 
 [Serializable]
-public class tmsdb {
+public class TmsDB {
 	public string time;
 	public string type;
 	public int id;
@@ -58,7 +66,7 @@ public class tmsdb {
 	public string tag;
 	public string announce;
 
-	public tmsdb(string search_mode, int arg1 = 0, int arg2 = 0) {
+	public TmsDB(string search_mode, int arg1 = 0, int arg2 = 0) {
 		switch (search_mode) {
 			case "ID_SENSOR":
 			this.id = arg1;
@@ -82,7 +90,7 @@ public class ServiceResponseDB {
 
 [Serializable]
 public class DBValue {
-	public tmsdb[] tmsdb;
+	public TmsDB[] tmsdb;
 }
 
 // class for rostopic publish
@@ -204,51 +212,54 @@ public class ServiceCall {
 public class AndroidRosSocketClient : MonoBehaviour {
 	private WebSocket ws;
 
-	[HideInInspector]
-	public int conneciton_state = wscCONST.STATE_DISCONNECTED;
-	
-	private string receiveJson, topicJson, srvResJson, srvReqJson;
-	private List<string[]> namesService, namesPubTopic, namesSubTopic;
+	//public int conneciton_state = wscCONST.STATE_DISCONNECTED;
+	private WSCState conneciton_state = WSCState.Disconnected;
+	public WSCState ConnectionState() { return conneciton_state; }
 
-	private MainScript mainSystem;
-	//private bool finish_set_address = false;
+	private string receiveJson, topicJson, srvResJson, srvReqJson;
+	private List<string[]> namesService = new List<string[]>();
+	private List<string[]> namesPubTopic = new List<string[]>();
+	private List<string[]> namesSubTopic = new List<string[]>();
+
+	private MainScript Main;
+	private bool finish_set_address = false;
 
 	//*****************************************
 	// function to be run first
-
+	/*
 	void Awake() {
 		// initialize
 		namesService = new List<string[]>();
 		namesPubTopic = new List<string[]>();
 		namesSubTopic = new List<string[]>();
 	}
+	*/
 
 	private void Start() {
-		mainSystem = GameObject.Find("Main System").GetComponent<MainScript>();
+		Main = GameObject.Find("Main System").GetComponent<MainScript>();
 	}
 
 	private void Update() {
-		/*
-		if (!mainSystem.finish_read_config) {
+		if (!Main.FinishReadConfig()) {
 			return;
 		}
 		else {
 			if (!finish_set_address) {
-				ws = new WebSocket(mainSystem.GetConfig().ros_ip);
+				ws = new WebSocket(Main.GetConfig().ros_ip);
 				//open message
 				ws.OnOpen += (sender, e) => {
 					Debug.Log("*********** Websocket connected ***********");
-					conneciton_state = wscCONST.STATE_CONNECTED;
+					conneciton_state = WSCState.Connected;
 				};
 				//close message
 				ws.OnClose += (sender, e) => {
 					Debug.Log("*********** Websocket disconnected ***********");
-					conneciton_state = wscCONST.STATE_DISCONNECTED;
+					conneciton_state = WSCState.Disconnected;
 				};
 				//error message
 				ws.OnError += (sender, e) => {
 					Debug.Log("Error : " + e.Message);
-					conneciton_state = wscCONST.STATE_ERROR;
+					conneciton_state = WSCState.Error;
 				};
 				OnMessage();
 
@@ -258,11 +269,11 @@ public class AndroidRosSocketClient : MonoBehaviour {
 				Connect();
 			}
 		}
-		*/
 	}
 
 	public void Connect() {
-		if(conneciton_state != wscCONST.STATE_CONNECTED) {
+		//if(conneciton_state != wscCONST.STATE_CONNECTED) {
+		if (conneciton_state != WSCState.Connected) {
 			ws.Connect();
 		}
 	}
