@@ -15,7 +15,7 @@ public class BsenCalibrationSystem : MonoBehaviour {
 	private MyConsoleCanvasManager MyConsoleCanvas;
 
 	//通信制御用
-	private TMSDatabaseAdapter DBAdapter;
+	private DBAccessManager DBAccessManager;
 	
 	//GameObjectたち
 	private GameObject ARCoreDevice;
@@ -55,8 +55,8 @@ public class BsenCalibrationSystem : MonoBehaviour {
 		CalibrationCanvas = GameObject.Find("Main System/Calibration Canvas").GetComponent<CalibrationCanvasManager>();
 		InformationCanvas = GameObject.Find("Main System/Information Canvas").GetComponent<InformationCanvasManager>();
 		MyConsoleCanvas = GameObject.Find("Main System/MyConsole Canvas").GetComponent<MyConsoleCanvasManager>();
-
-		DBAdapter = GameObject.Find("Android Ros Socket Client").GetComponent<TMSDatabaseAdapter>();
+		
+		DBAccessManager = GameObject.Find("Android Ros Socket Client").GetComponent<DBAccessManager>();
 
 		ARCoreDevice = GameObject.Find("ARCore Device");
 
@@ -128,8 +128,8 @@ public class BsenCalibrationSystem : MonoBehaviour {
 			switch (calibration_state) {
 				//DBにアクセス開始
 				case State.TryToConnect:
-					if (DBAdapter.IsConnected() && !DBAdapter.CheckWaitAnything()) {
-						IEnumerator coroutine = DBAdapter.ReadMarkerPos();
+					if (DBAccessManager.IsConnected() && !DBAccessManager.CheckWaitAnything()) {
+						IEnumerator coroutine = DBAccessManager.ReadViconIrvsMarker();
 						StartCoroutine(coroutine);
 						calibration_state = State.TryToAccessDatabase;
 					}
@@ -137,9 +137,15 @@ public class BsenCalibrationSystem : MonoBehaviour {
 
 				//DBのデータをもとにモデルの位置＆回転を変更
 				case State.TryToAccessDatabase:
-					if (DBAdapter.CheckSuccess()) {
-						ServiceResponseDB responce = DBAdapter.GetResponce();
-						DBAdapter.FinishReadData();
+					if (DBAccessManager.CheckWaitViconIrvsMarker()) {
+						if (DBAccessManager.CheckAbort()) {
+							DBAccessManager.FinishAccess();
+							calibration_state = State.TryToConnect;
+						}
+					}
+					if (DBAccessManager.CheckSuccess()) {
+						ServiceResponseDB responce = DBAccessManager.GetResponce();
+						DBAccessManager.FinishAccess();
 
 						//位置を取得＆変換
 						Vector3 marker_position = new Vector3((float)responce.values.tmsdb[0].x, (float)responce.values.tmsdb[0].y, (float)responce.values.tmsdb[0].z);

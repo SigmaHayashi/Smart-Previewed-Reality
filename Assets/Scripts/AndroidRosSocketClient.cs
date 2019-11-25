@@ -19,7 +19,7 @@ public enum WSCState {
 	Connected = 1,
 	Error = -1
 }
-
+/*
 [Serializable]
 public class ServiceCallDB {
 	public string op = "call_service";
@@ -92,6 +92,7 @@ public class ServiceResponseDB {
 public class DBValue {
 	public TmsDB[] tmsdb;
 }
+*/
 
 // class for rostopic publish
 #region
@@ -474,10 +475,12 @@ public class AndroidRosSocketClient : MonoBehaviour {
 	}
 
 	//
+	/*
 	public void ServiceCallerDB(string serviceName, TmsDBReq args) {
 		ServiceCallDB temp = new ServiceCallDB(serviceName, args);
 		SendOpMsg(temp);
 	}
+	*/
 
 	public void ServiceAdvertiser(string serviceName, string serviceType) {
 		namesService.Add(new string[] { serviceName, serviceType });

@@ -7,8 +7,8 @@ public class TMSDatabaseAdapter : MonoBehaviour {
 
 	//Android Ros Socket Client関連
 	private AndroidRosSocketClient RosSocketClient;
-	private string srvName = "tms_db_reader";
-	private TmsDBReq srvReq = new TmsDBReq();
+	private readonly string srvName = "tms_db_reader";
+	//private RequestTmsDB srvReq = new RequestTmsDB();
 	private string srvRes;
 
 	private float time = 0.0f;
@@ -38,7 +38,7 @@ public class TMSDatabaseAdapter : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update() {
-		if (RosSocketClient.ConnectionState() == WSCState.Connected) {
+		if (RosSocketClient.ConnectionState() != WSCState.Connected) {
 			time += Time.deltaTime;
 			if (time > 5.0f) {
 				time = 0.0f;
@@ -54,8 +54,8 @@ public class TMSDatabaseAdapter : MonoBehaviour {
 						time += Time.deltaTime;
 						if (time > 1.0f) {
 							time = 0.0f;
-							srvReq.tmsdb = new TmsDB("ID_SENSOR", 7030, 3001);
-							RosSocketClient.ServiceCallerDB(srvName, srvReq);
+							//srvReq.tmsdb = new TmsDB("ID_SENSOR", 7030, 3001);
+							//RosSocketClient.ServiceCallerDB(srvName, srvReq);
 						}
 						if (RosSocketClient.IsReceiveSrvRes() && RosSocketClient.GetSrvResValue("service") == srvName) {
 							srvRes = RosSocketClient.GetSrvResMsg();
@@ -204,8 +204,8 @@ public class TMSDatabaseAdapter : MonoBehaviour {
 		wait_anything =  access_db = read_marker_pos = true;
 
 		time = 0.0f;
-		srvReq.tmsdb = new TmsDB("ID_SENSOR", 7030, 3001);
-		RosSocketClient.ServiceCallerDB(srvName, srvReq);
+		//srvReq.tmsdb = new TmsDB("ID_SENSOR", 7030, 3001);
+		//RosSocketClient.ServiceCallerDB(srvName, srvReq);
 
 		while (access_db) {
 			yield return null;
@@ -228,8 +228,8 @@ public class TMSDatabaseAdapter : MonoBehaviour {
 		wait_anything = access_db = get_refrigerator_item = true;
 
 		time = 0.0f;
-		srvReq.tmsdb = new TmsDB("PLACE", 2009);
-		RosSocketClient.ServiceCallerDB(srvName, srvReq);
+		//srvReq.tmsdb = new TmsDB("PLACE", 2009);
+		//RosSocketClient.ServiceCallerDB(srvName, srvReq);
 
 		while (access_db) {
 			yield return null;
@@ -252,8 +252,8 @@ public class TMSDatabaseAdapter : MonoBehaviour {
 		wait_anything = access_db = read_smartpal_pos = true;
 
 		time = 0.0f;
-		srvReq.tmsdb = new TmsDB("ID_SENSOR", 2003, 3001);
-		RosSocketClient.ServiceCallerDB(srvName, srvReq);
+		//srvReq.tmsdb = new TmsDB("ID_SENSOR", 2003, 3001);
+		//RosSocketClient.ServiceCallerDB(srvName, srvReq);
 
 		while (access_db) {
 			yield return null;
@@ -276,8 +276,8 @@ public class TMSDatabaseAdapter : MonoBehaviour {
 		wait_anything = access_db = read_whs1 = true;
 
 		time = 0.0f;
-		srvReq.tmsdb = new TmsDB("ID_SENSOR", 3021, 3021);
-		RosSocketClient.ServiceCallerDB(srvName, srvReq);
+		//srvReq.tmsdb = new TmsDB("ID_SENSOR", 3021, 3021);
+		//RosSocketClient.ServiceCallerDB(srvName, srvReq);
 
 		while (access_db) {
 			yield return null;
@@ -308,8 +308,8 @@ public class TMSDatabaseAdapter : MonoBehaviour {
 			access_db = true;
 
 			time = 0.0f;
-			srvReq.tmsdb = new TmsDB("ID_SENSOR", id, 3005);
-			RosSocketClient.ServiceCallerDB(srvName, srvReq);
+			//srvReq.tmsdb = new TmsDB("ID_SENSOR", id, 3005);
+			//RosSocketClient.ServiceCallerDB(srvName, srvReq);
 
 			while (access_db) {
 				yield return null;
@@ -348,8 +348,8 @@ public class TMSDatabaseAdapter : MonoBehaviour {
 		wait_anything = access_db = read_battery = true;
 
 		time = 0.0f;
-		srvReq.tmsdb = new TmsDB("ID_SENSOR", 2003, 3005);
-		RosSocketClient.ServiceCallerDB(srvName, srvReq);
+		//srvReq.tmsdb = new TmsDB("ID_SENSOR", 2003, 3005);
+		//RosSocketClient.ServiceCallerDB(srvName, srvReq);
 
 		while (access_db) {
 			yield return null;
