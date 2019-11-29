@@ -34,7 +34,8 @@ public class SmartPalControll : MonoBehaviour {
 		InformationCanvas = GameObject.Find("Main System/Information Canvas").GetComponent<InformationCanvasManager>();
 
 		CalibrationSystem = GameObject.Find("Main System").GetComponent<BsenCalibrationSystem>();
-		DBAccessManager = GameObject.Find("Android Ros Socket Client").GetComponent<DBAccessManager>();
+		//DBAccessManager = GameObject.Find("Android Ros Socket Client").GetComponent<DBAccessManager>();
+		DBAccessManager = GameObject.Find("Ros Socket Client").GetComponent<DBAccessManager>();
 	}
 
 	// Update is called once per frame
@@ -67,16 +68,19 @@ public class SmartPalControll : MonoBehaviour {
 			}
 
 			if (DBAccessManager.CheckSuccess()) {
-				ServiceResponseDB responce = DBAccessManager.GetResponce();
+				//ServiceResponseDB responce = DBAccessManager.GetResponce();
+				DBValue responce_value = DBAccessManager.GetResponceValue();
 				DBAccessManager.FinishAccess();
 
-				Vector3 sp5_pos = new Vector3((float)responce.values.tmsdb[0].x, (float)responce.values.tmsdb[0].y, (float)responce.values.tmsdb[0].z);
+				//Vector3 sp5_pos = new Vector3((float)responce.values.tmsdb[0].x, (float)responce.values.tmsdb[0].y, (float)responce.values.tmsdb[0].z);
+				Vector3 sp5_pos = new Vector3((float)responce_value.tmsdb[0].x, (float)responce_value.tmsdb[0].y, (float)responce_value.tmsdb[0].z);
 				sp5_pos = Ros2UnityPosition(sp5_pos);
 				sp5_pos.y = 0.0f;
 				sp5_pos += Main.GetConfig().vicon_offset_pos;
 				sp5_pos += Main.GetConfig().robot_offset_pos;
 
-				Vector3 sp5_euler = new Vector3((float)responce.values.tmsdb[0].rr * Mathf.Rad2Deg, (float)responce.values.tmsdb[0].rp * Mathf.Rad2Deg, (float)responce.values.tmsdb[0].ry * Mathf.Rad2Deg);
+				//Vector3 sp5_euler = new Vector3((float)responce.values.tmsdb[0].rr * Mathf.Rad2Deg, (float)responce.values.tmsdb[0].rp * Mathf.Rad2Deg, (float)responce.values.tmsdb[0].ry * Mathf.Rad2Deg);
+				Vector3 sp5_euler = new Vector3((float)responce_value.tmsdb[0].rr * Mathf.Rad2Deg, (float)responce_value.tmsdb[0].rp * Mathf.Rad2Deg, (float)responce_value.tmsdb[0].ry * Mathf.Rad2Deg);
 				sp5_euler = Ros2UnityRotation(sp5_euler);
 				sp5_euler.x = 0.0f;
 				sp5_euler.z = 0.0f;
@@ -85,15 +89,21 @@ public class SmartPalControll : MonoBehaviour {
 				transform.position = sp5_pos;
 				transform.eulerAngles = sp5_euler;
 
-				Debug.Log(responce.values.tmsdb[0].name + " pos: " + sp5_pos);
-				Debug.Log(responce.values.tmsdb[0].name + " eul: " + sp5_euler);
-				if(Main.WhichCanvasActive() == CanvasName.MyConsoleCanvas) {
-					MyConsoleCanvas.Add(responce.values.tmsdb[0].name + " pos: " + sp5_pos);
-					MyConsoleCanvas.Add(responce.values.tmsdb[0].name + " eul: " + sp5_euler);
+				//Debug.Log(responce.values.tmsdb[0].name + " pos: " + sp5_pos);
+				//Debug.Log(responce.values.tmsdb[0].name + " eul: " + sp5_euler);
+				Debug.Log(responce_value.tmsdb[0].name + " pos: " + sp5_pos);
+				Debug.Log(responce_value.tmsdb[0].name + " eul: " + sp5_euler);
+				if (Main.WhichCanvasActive() == CanvasName.MyConsoleCanvas) {
+					//MyConsoleCanvas.Add(responce.values.tmsdb[0].name + " pos: " + sp5_pos);
+					//MyConsoleCanvas.Add(responce.values.tmsdb[0].name + " eul: " + sp5_euler);
+					MyConsoleCanvas.Add(responce_value.tmsdb[0].name + " pos: " + sp5_pos);
+					MyConsoleCanvas.Add(responce_value.tmsdb[0].name + " eul: " + sp5_euler);
 				}
 				else {
-					Main.MyConsole_UpdateBuffer_Message(responce.values.tmsdb[0].name + " pos: " + sp5_pos);
-					Main.MyConsole_UpdateBuffer_Message(responce.values.tmsdb[0].name + " eul: " + sp5_euler);
+					//Main.MyConsole_UpdateBuffer_Message(responce.values.tmsdb[0].name + " pos: " + sp5_pos);
+					//Main.MyConsole_UpdateBuffer_Message(responce.values.tmsdb[0].name + " eul: " + sp5_euler);
+					Main.MyConsole_UpdateBuffer_Message(responce_value.tmsdb[0].name + " pos: " + sp5_pos);
+					Main.MyConsole_UpdateBuffer_Message(responce_value.tmsdb[0].name + " eul: " + sp5_euler);
 				}
 				if(Main.WhichCanvasActive() == CanvasName.InformationCanvas) {
 					InformationCanvas.Change_Vicon_SmartPalInfoText("SmartPal\n" + "Pos : " + sp5_pos.ToString("f2") + " Yaw : " + sp5_euler.y.ToString("f2"));

@@ -55,8 +55,9 @@ public class BsenCalibrationSystem : MonoBehaviour {
 		CalibrationCanvas = GameObject.Find("Main System/Calibration Canvas").GetComponent<CalibrationCanvasManager>();
 		InformationCanvas = GameObject.Find("Main System/Information Canvas").GetComponent<InformationCanvasManager>();
 		MyConsoleCanvas = GameObject.Find("Main System/MyConsole Canvas").GetComponent<MyConsoleCanvasManager>();
-		
-		DBAccessManager = GameObject.Find("Android Ros Socket Client").GetComponent<DBAccessManager>();
+
+		//DBAccessManager = GameObject.Find("Android Ros Socket Client").GetComponent<DBAccessManager>();
+		DBAccessManager = GameObject.Find("Ros Socket Client").GetComponent<DBAccessManager>();
 
 		ARCoreDevice = GameObject.Find("ARCore Device");
 
@@ -144,11 +145,13 @@ public class BsenCalibrationSystem : MonoBehaviour {
 						}
 					}
 					if (DBAccessManager.CheckSuccess()) {
-						ServiceResponseDB responce = DBAccessManager.GetResponce();
+						//ServiceResponseDB responce = DBAccessManager.GetResponce();
+						DBValue responce_value = DBAccessManager.GetResponceValue();
 						DBAccessManager.FinishAccess();
 
 						//位置を取得＆変換
-						Vector3 marker_position = new Vector3((float)responce.values.tmsdb[0].x, (float)responce.values.tmsdb[0].y, (float)responce.values.tmsdb[0].z);
+						//Vector3 marker_position = new Vector3((float)responce.values.tmsdb[0].x, (float)responce.values.tmsdb[0].y, (float)responce.values.tmsdb[0].z);
+						Vector3 marker_position = new Vector3((float)responce_value.tmsdb[0].x, (float)responce_value.tmsdb[0].y, (float)responce_value.tmsdb[0].z);
 						marker_position = Ros2UnityPosition(marker_position);
 						marker_position += Main.GetConfig().vicon_offset_pos;
 						marker_position += Main.GetConfig().calibration_offset_pos;
@@ -158,9 +161,14 @@ public class BsenCalibrationSystem : MonoBehaviour {
 
 						//回転を取得＆変換
 						Vector3 marker_euler = new Vector3(
+							/*
 							(float)responce.values.tmsdb[0].rr * Mathf.Rad2Deg,
 							(float)responce.values.tmsdb[0].rp * Mathf.Rad2Deg,
 							(float)responce.values.tmsdb[0].ry * Mathf.Rad2Deg);
+							*/
+							(float)responce_value.tmsdb[0].rr * Mathf.Rad2Deg,
+							(float)responce_value.tmsdb[0].rp * Mathf.Rad2Deg,
+							(float)responce_value.tmsdb[0].ry * Mathf.Rad2Deg);
 						marker_euler = Ros2UnityRotation(marker_euler);
 
 						marker_euler.x = 0.0f;

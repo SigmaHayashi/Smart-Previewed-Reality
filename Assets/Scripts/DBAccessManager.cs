@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 
+/*
 [Serializable]
 public class ServiceCallDB {
 	public string op = "call_service";
@@ -13,9 +14,10 @@ public class ServiceCallDB {
 		this.args = args;
 	}
 }
+*/
 
 [Serializable]
-public class RequestTmsDB {
+public class TmsDBArgs {
 	public TmsDB tmsdb;
 }
 
@@ -81,6 +83,7 @@ public enum TmsDBSerchMode {
 	PLACE
 }
 
+/*
 [Serializable]
 public class ServiceResponseDB {
 	public bool result;
@@ -88,6 +91,7 @@ public class ServiceResponseDB {
 	public string op;
 	public DBValue values;
 }
+*/
 
 [Serializable]
 public class DBValue {
@@ -96,17 +100,26 @@ public class DBValue {
 
 public class DBAccessManager : MonoBehaviour {
 
+	/*
 	public void ServiceCallerDB(RequestTmsDB args) {
 		ServiceCallDB temp = new ServiceCallDB(args);
 		RosSocketClient.SendOpMsg(temp);
 	}
+	*/
 
 	private MainScript Main;
-	
+
 	//Android Ros Socket Client関連
+	/*
 	private AndroidRosSocketClient RosSocketClient;
 	private RequestTmsDB ServiceRequest = new RequestTmsDB();
 	private string ServiceResponce;
+	*/
+	//Ros Socket Client関連
+	private RosSocketClient RosSocketClient;
+	private readonly string service_name = "tms_db_reader";
+	private string response_json;
+	private DBValue response_value;
 
 	private float time_access = 0.0f;
 
@@ -118,7 +131,7 @@ public class DBAccessManager : MonoBehaviour {
 	private bool wait_vicon_irvs_marker = false;
 	private bool wait_vicon_smartpal = false;
 
-	private ServiceResponseDB responce;
+	//private ServiceResponseDB responce;
 
 
 	// Start is called before the first frame update
@@ -126,7 +139,8 @@ public class DBAccessManager : MonoBehaviour {
 		Main = GameObject.Find("Main System").GetComponent<MainScript>();
 
 		//ROSTMSに接続
-		RosSocketClient = GameObject.Find("Android Ros Socket Client").GetComponent<AndroidRosSocketClient>();
+		//RosSocketClient = GameObject.Find("Android Ros Socket Client").GetComponent<AndroidRosSocketClient>();
+		RosSocketClient = GameObject.Find("Ros Socket Client").GetComponent<RosSocketClient>();
 	}
 
 
@@ -136,7 +150,8 @@ public class DBAccessManager : MonoBehaviour {
 			return;
 		}
 
-		if(RosSocketClient.ConnectionState() == WSCState.Disconnected) { //切断時
+		//if(RosSocketClient.ConnectionState() == WSCState.Disconnected) { //切断時
+		if (RosSocketClient.GetConnectionState() == ConnectionState.Disconnected) { //切断時
 			time_access += Time.deltaTime;
 			if (time_access > 5.0f) {
 				time_access = 0.0f;
@@ -144,7 +159,8 @@ public class DBAccessManager : MonoBehaviour {
 			}
 		}
 
-		if(RosSocketClient.ConnectionState() == WSCState.Connected) {
+		//if(RosSocketClient.ConnectionState() == WSCState.Connected) {
+		if(RosSocketClient.GetConnectionState() == ConnectionState.Connected) {
 			if(!success_access || !abort_access) {
 				if (wait_vicon_irvs_marker) {
 					WaitResponce(1.0f);
@@ -162,7 +178,8 @@ public class DBAccessManager : MonoBehaviour {
 	 * 接続状態確認
 	 **************************************************/
 	public bool IsConnected() {
-		if(RosSocketClient.ConnectionState() == WSCState.Connected) {
+		//if(RosSocketClient.ConnectionState() == WSCState.Connected) {
+		if (RosSocketClient.GetConnectionState() == ConnectionState.Connected) {
 			return true;
 		}
 		return false;
@@ -178,11 +195,21 @@ public class DBAccessManager : MonoBehaviour {
 			abort_access = true;
 			access_db = false;
 		}
+		/*
 		if (RosSocketClient.IsReceiveSrvRes() && RosSocketClient.GetSrvResValue("service") == "tms_db_reader") {
 			ServiceResponce = RosSocketClient.GetSrvResMsg();
 			Debug.Log("ROS: " + ServiceResponce);
 
 			responce = JsonUtility.FromJson<ServiceResponseDB>(ServiceResponce);
+
+			success_access = true;
+			access_db = false;
+		}
+		*/
+		if (RosSocketClient.IsReceiveServiceResponse() && RosSocketClient.GetServiceResponseWhichService() == service_name) {
+			response_json = RosSocketClient.GetServiceResponseMessage();
+			string response_value_json = RosSocketClient.GetJsonArg(response_json, nameof(ServiceResponse.values));
+			response_value = JsonUtility.FromJson<DBValue>(response_value_json);
 
 			success_access = true;
 			access_db = false;
@@ -198,7 +225,9 @@ public class DBAccessManager : MonoBehaviour {
 
 	public bool CheckAbort() { return abort_access; }
 
-	public ServiceResponseDB GetResponce() { return responce; }
+	//public ServiceResponseDB GetResponce() { return responce; }
+	public string GetResponceJson() { return response_json; }
+	public DBValue GetResponceValue() { return response_value; }
 
 	public void FinishAccess() {
 		success_access = abort_access = false;
@@ -211,8 +240,14 @@ public class DBAccessManager : MonoBehaviour {
 		wait_anything = access_db = wait_vicon_irvs_marker = true;
 		time_access = 0.0f;
 
+		/*
 		ServiceRequest.tmsdb = new TmsDB(TmsDBSerchMode.ID_SENSOR, 7030, 3001);
 		ServiceCallerDB(ServiceRequest);
+		*/
+		TmsDBArgs args = new TmsDBArgs() {
+			tmsdb = new TmsDB(TmsDBSerchMode.ID_SENSOR, 7030, 3001)
+		};
+		RosSocketClient.ServiceCaller(service_name, args);
 
 		while (access_db) {
 			yield return null;
@@ -234,8 +269,14 @@ public class DBAccessManager : MonoBehaviour {
 		wait_anything = access_db = wait_vicon_smartpal = true;
 		time_access = 0.0f;
 
+		/*
 		ServiceRequest.tmsdb = new TmsDB(TmsDBSerchMode.ID_SENSOR, 2003, 3001);
 		ServiceCallerDB(ServiceRequest);
+		*/
+		TmsDBArgs args = new TmsDBArgs() {
+			tmsdb = new TmsDB(TmsDBSerchMode.ID_SENSOR, 2003, 3001)
+		};
+		RosSocketClient.ServiceCaller(service_name, args);
 
 		while (access_db) {
 			yield return null;
