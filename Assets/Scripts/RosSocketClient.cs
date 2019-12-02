@@ -117,8 +117,6 @@ public class ServiceResponse {
 		this.id = id;
 		this.result = result;
 	}
-
-	public ServiceResponse() { }
 }
 #endregion
 
@@ -130,6 +128,7 @@ public class ServiceResponse {
 public class CallService {
 	public string op = "call_service";
 	public string service;
+	public string id;
 	public string args;
 
 	public CallService(string service) {
@@ -387,11 +386,11 @@ public class RosSocketClient : MonoBehaviour {
 		Send(JsonUtility.ToJson(message));
 	}
 
-	public void Publisher(string topic, object msg) {
-		if (PublishTopicNameDictionary.ContainsKey(topic)) {
-			Publish publish = new Publish(topic);
+	public void Publisher(string topic_name, object msg) {
+		if (PublishTopicNameDictionary.ContainsKey(topic_name)) {
+			Publish publish = new Publish(topic_name);
 			string message = PushArgJson(publish, publish.msg, msg);
-			Send(JsonUtility.ToJson(message));
+			Send(message);
 		}
 		else {
 			Debug.Log("Error : Please Advertise Topic");
@@ -410,8 +409,28 @@ public class RosSocketClient : MonoBehaviour {
 		Send(JsonUtility.ToJson(message));
 	}
 
-	public void ServiceCaller(string service, object args) {
-		CallService call = new CallService(service);
+	public void ServiceAdvertiser(string service_name, string service_type) {
+		ServiceNameDictionary.Add(service_name, service_type);
+		AdvertiseService message = new AdvertiseService(service_name, service_type);
+		Send(JsonUtility.ToJson(message));
+		Debug.Log(JsonUtility.ToJson(message));
+	}
+
+	public void ServiceUnAdvertiser(string service_name) {
+		ServiceNameDictionary.Remove(service_name);
+		UnAdvertiseService message = new UnAdvertiseService(service_name);
+		Send(JsonUtility.ToJson(message));
+		Debug.Log(JsonUtility.ToJson(message));
+	}
+
+	public void ServiceResponder(string service_name, string id, bool result, object values) {
+		ServiceResponse responce = new ServiceResponse(service_name, id, result);
+		string message = PushArgJson(responce, responce.values, values);
+		Send(message);
+	}
+
+	public void ServiceCaller(string service_name, object args) {
+		CallService call = new CallService(service_name);
 		string message = PushArgJson(call, call.args, args);
 		Send(message);
 	}

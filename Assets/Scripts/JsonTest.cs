@@ -227,16 +227,44 @@ public class JsonTest : MonoBehaviour {
 
 	private RosSocketClient RosSocketClient;
 
+	/*
+	// Topic Client
 	private string responce_json;
 	private TmsDBStamped responce_value;
 
+	private bool subscribed = false;
+	private bool unsubscribed = false;
+	*/
+
+	/*
+	// Topic Server
 	private bool advertised = false;
 	private bool unadvertised = false;
+
+	TmsDBStamped msg = new TmsDBStamped() {
+		tmsdb = new TmsDB[1]
+	};
+	*/
+
+	/*
+	// Service Server
+	private bool advertised_service = false;
+	private bool unadvertised_service = false;
+	*/
 
 	private void Start() {
 		Main = GameObject.Find("Main System").GetComponent<MainScript>();
 
 		RosSocketClient = GameObject.Find("Ros Socket Client").GetComponent<RosSocketClient>();
+
+		/*
+		// Topic Server
+		msg.tmsdb[0] = new TmsDB(TmsDBSerchMode.ID_SENSOR, 7002, 3018) {
+			x = 0,
+			y = 0,
+			z = 0,
+		};
+		*/
 	}
 
 	private void Update() {
@@ -245,9 +273,11 @@ public class JsonTest : MonoBehaviour {
 		}
 
 		if(RosSocketClient.GetConnectionState() == ConnectionState.Connected) {
-			if (!advertised) {
+			/*
+			// Topic Client
+			if (!subscribed) {
 				RosSocketClient.Subscriber("tms_db_data", "tms_msg_db/TmsdbStamped");
-				advertised = true;
+				subscribed = true;
 			}
 
 			if (RosSocketClient.IsReceiveTopic() && RosSocketClient.GetTopicWhichTopic() == "tms_db_data") {
@@ -261,37 +291,97 @@ public class JsonTest : MonoBehaviour {
 			if (Application.isEditor) {
 				if (Input.GetKey(KeyCode.U)) {
 					Debug.Log("Get Key");
-					if (!unadvertised) {
+					if (!unsubscribed) {
 						RosSocketClient.UnSubscriber("tms_db_data");
+						unsubscribed = true;
+					}
+				}
+			}
+			*/
+
+			/*
+			// Topic Server
+			if (!advertised) {
+				RosSocketClient.Advertiser("tms_db_data", "tms_msg_db/TmsdbStamped");
+				advertised = true;
+			}
+
+			if (advertised && !unadvertised) {
+				msg.tmsdb[0].x += 0.1;
+				msg.tmsdb[0].y += 0.1;
+				msg.tmsdb[0].z += 0.1;
+				if(msg.tmsdb[0].x > 10) {
+					msg.tmsdb[0].x = msg.tmsdb[0].y = msg.tmsdb[0].z = 0;
+				}
+				RosSocketClient.Publisher("tms_db_data", msg);
+			}
+
+			if (Application.isEditor) {
+				if (Input.GetKey(KeyCode.U)) {
+					Debug.Log("Get Key");
+					if (!unadvertised) {
+						RosSocketClient.UnAdvertiser("tms_db_data");
 						unadvertised = true;
 					}
 				}
 			}
+			*/
+
+			/*
+			// Service Server
+			if (!advertised_service) {
+				RosSocketClient.ServiceAdvertiser("unity_test", "tms_msg_rc/robot_control");
+				advertised_service = true;
+			}
+
+			if(RosSocketClient.IsReceiveServiceRequest() && RosSocketClient.GetServiceRequestWhichService() == "unity_test") {
+				string request_json = RosSocketClient.GetServiceRequestMessage();
+				Debug.Log(request_json);
+
+				CallService request = JsonUtility.FromJson<CallService>(request_json);
+
+				RobotControlResponce value = new RobotControlResponce() {
+					status = false
+				};
+				RosSocketClient.ServiceResponder("unity_test", request.id, true, value);
+			}
+			
+			if (Application.isEditor) {
+				if (Input.GetKey(KeyCode.U)) {
+					Debug.Log("Get Key");
+					if (!unadvertised_service) {
+						RosSocketClient.ServiceUnAdvertiser("unity_test");
+						unadvertised_service = true;
+					}
+				}
+			}
+			*/
 		}
 	}
-
-
-	private void OnApplicationQuit() {
-		/*
-		Debug.Log("Hey");
-		RosSocketClient.UnSubscriber("tms_db_data");
-		*/
-	}
-
 }
 
+/*
+[Serializable]
 public class TmsDBStamped {
 	public Header header;
 	public TmsDB[] tmsdb;
 }
 
+[Serializable]
 public class Header {
 	public Stamp stamp;
 	public string frame_id;
 	public int seq;
 }
 
+[Serializable]
 public class Stamp {
 	public int secs;
 	public int nsecs;
 }
+
+[Serializable]
+public class RobotControlResponce {
+	public bool status;
+}
+*/
