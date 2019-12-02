@@ -172,6 +172,10 @@ public class RosSocketClient : MonoBehaviour {
 		}
 	}
 
+	private void OnApplicationQuit() {
+		Close();
+	}
+
 	/**************************************************
 	 * 最初の設定
 	 **************************************************/
@@ -199,7 +203,7 @@ public class RosSocketClient : MonoBehaviour {
 		//ROSからメッセージが来たとき
 		WebSocket.OnMessage += (sender, e) => {
 			receive_json = e.Data;
-			Debug.Log("ROS : " + receive_json);
+			//Debug.Log("ROS : " + receive_json);
 			
 			int index_op = receive_json.IndexOf("\"op\"");
 			int index_colon = receive_json.IndexOf(":", index_op);
@@ -394,9 +398,9 @@ public class RosSocketClient : MonoBehaviour {
 		}
 	}
 
-	public void Subscriber(string topic_name, string topi_type) {
-		SubscribeTopicNameDictionary.Add(topic_name, topi_type);
-		Subscribe message = new Subscribe(topic_name, topi_type);
+	public void Subscriber(string topic_name, string topic_type) {
+		SubscribeTopicNameDictionary.Add(topic_name, topic_type);
+		Subscribe message = new Subscribe(topic_name, topic_type);
 		Send(JsonUtility.ToJson(message));
 	}
 
