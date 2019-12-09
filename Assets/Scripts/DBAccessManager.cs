@@ -206,8 +206,19 @@ public class DBAccessManager : MonoBehaviour {
 			access_db = false;
 		}
 		*/
+		/*
 		if (RosSocketClient.IsReceiveServiceResponse() && RosSocketClient.GetServiceResponseWhichService() == service_name) {
 			response_json = RosSocketClient.GetServiceResponseMessage();
+			string response_value_json = RosSocketClient.GetJsonArg(response_json, nameof(ServiceResponse.values));
+			response_value = JsonUtility.FromJson<DBValue>(response_value_json);
+
+			success_access = true;
+			access_db = false;
+		}
+		*/
+		KeyValuePair<bool, string> responce = RosSocketClient.GetServiceResponseMessage(service_name);
+		if (responce.Key) {
+			response_json = responce.Value;
 			string response_value_json = RosSocketClient.GetJsonArg(response_json, nameof(ServiceResponse.values));
 			response_value = JsonUtility.FromJson<DBValue>(response_value_json);
 

@@ -145,10 +145,15 @@ public class RosSocketClient : MonoBehaviour {
 	private ConnectionState connection_state = ConnectionState.Disconnected;
 	public ConnectionState GetConnectionState() { return connection_state; }
 
-	private string receive_json, topic_json, service_response_json, service_request_json;
+	//private string receive_json, topic_json, service_response_json, service_request_json;
+	/*
 	private Dictionary<string, string> ServiceNameDictionary = new Dictionary<string, string>();
 	private Dictionary<string, string> PublishTopicNameDictionary = new Dictionary<string, string>();
 	private Dictionary<string, string> SubscribeTopicNameDictionary = new Dictionary<string, string>();
+	*/
+	private Dictionary<string, string> ReceivedTopicDictionary = new Dictionary<string, string>();
+	private Dictionary<string, string> ReceivedServiceResponseDictionary = new Dictionary<string, string>();
+	private Dictionary<string, string> ReceivedServiceRequestDictionary = new Dictionary<string, string>();
 
 	private MainScript Main;
 	private bool finish_setup = false;
@@ -201,9 +206,10 @@ public class RosSocketClient : MonoBehaviour {
 
 		//ROSからメッセージが来たとき
 		WebSocket.OnMessage += (sender, e) => {
-			receive_json = e.Data;
+			//receive_json = e.Data;
+			string receive_json = e.Data;
 			//Debug.Log("ROS : " + receive_json);
-			
+
 			int index_op = receive_json.IndexOf("\"op\"");
 			int index_colon = receive_json.IndexOf(":", index_op);
 			int index_end = receive_json.IndexOf(",", index_colon);
@@ -216,13 +222,21 @@ public class RosSocketClient : MonoBehaviour {
 
 			switch (op) {
 				case "publish":
-					topic_json = receive_json;
+					//topic_json = receive_json;
+					/*
+					string topic_name = JsonUtility.FromJson<Publish>(receive_json).topic;
+					if (ReceivedTopicDictionary.ContainsKey(topic_name)) { ReceivedTopicDictionary.Remove(topic_name); }
+					ReceivedTopicDictionary.Add(topic_name, receive_json);
+					*/
+					ReceivedTopicDictionary[JsonUtility.FromJson<Publish>(receive_json).topic] = receive_json;
 					break;
 				case "service_response":
-					service_response_json = receive_json;
+					//service_response_json = receive_json;
+					ReceivedServiceResponseDictionary[JsonUtility.FromJson<ServiceResponse>(receive_json).service] = receive_json;
 					break;
 				case "call_service":
-					service_request_json = receive_json;
+					//service_request_json = receive_json;
+					ReceivedServiceRequestDictionary[JsonUtility.FromJson<CallService>(receive_json).service] = receive_json;
 					break;
 				default:
 					break;
@@ -254,13 +268,14 @@ public class RosSocketClient : MonoBehaviour {
 	/**************************************************
 	 * ROSからのメッセージに対するAPI
 	 **************************************************/
+	/*
 	public bool IsReceiveMessage() {
 		if (receive_json != null)
 			return true;
 		else
 			return false;
 	}
-
+	
 	public bool IsReceiveTopic() {
 		if (topic_json != null)
 			return true;
@@ -320,6 +335,34 @@ public class RosSocketClient : MonoBehaviour {
 		CallService request = JsonUtility.FromJson<CallService>(service_request_json);
 		return request.service;
 	}
+	*/
+
+	public KeyValuePair<bool, string> GetTopicMessage(string topic_name) {
+		if (ReceivedTopicDictionary.ContainsKey(topic_name)) {
+			string message = ReceivedTopicDictionary[topic_name];
+			ReceivedTopicDictionary.Remove(topic_name);
+			return new KeyValuePair<bool, string>(true, message);
+		}
+		return new KeyValuePair<bool, string>(false, null);
+	}
+
+	public KeyValuePair<bool, string> GetServiceResponseMessage(string service_name) {
+		if (ReceivedServiceResponseDictionary.ContainsKey(service_name)) {
+			string message = ReceivedServiceResponseDictionary[service_name];
+			ReceivedServiceResponseDictionary.Remove(service_name);
+			return new KeyValuePair<bool, string>(true, message);
+		}
+		return new KeyValuePair<bool, string>(false, null);
+	}
+
+	public KeyValuePair<bool, string> GetServiceRequestMessage(string service_name) {
+		if (ReceivedServiceRequestDictionary.ContainsKey(service_name)) {
+			string message = ReceivedServiceRequestDictionary[service_name];
+			ReceivedServiceRequestDictionary.Remove(service_name);
+			return new KeyValuePair<bool, string>(true, message);
+		}
+		return new KeyValuePair<bool, string>(false, null);
+	}
 
 	/**************************************************
 	 * JSON形式の変数を取り出す
@@ -375,57 +418,57 @@ public class RosSocketClient : MonoBehaviour {
 	 * ROSにメッセージを送るときのAPI
 	 **************************************************/
 	public void Advertiser(string topic_name, string topic_type) {
-		PublishTopicNameDictionary.Add(topic_name, topic_type);
+		//PublishTopicNameDictionary.Add(topic_name, topic_type);
 		Advertise message = new Advertise(topic_name, topic_type);
 		Send(JsonUtility.ToJson(message));
 	}
 
 	public void UnAdvertiser(string topic_name) {
-		PublishTopicNameDictionary.Remove(topic_name);
+		//PublishTopicNameDictionary.Remove(topic_name);
 		UnAdvertise message = new UnAdvertise(topic_name);
 		Send(JsonUtility.ToJson(message));
 	}
 
 	public void Publisher(string topic_name, object msg) {
-		if (PublishTopicNameDictionary.ContainsKey(topic_name)) {
+		//if (PublishTopicNameDictionary.ContainsKey(topic_name)) {
 			Publish publish = new Publish(topic_name);
 			string message = PushArgJson(publish, publish.msg, msg);
 			Send(message);
-		}
-		else {
-			Debug.Log("Error : Please Advertise Topic");
-		}
+		//}
+		//else {
+		//	Debug.Log("Error : Please Advertise Topic");
+		//}
 	}
 
 	public void Subscriber(string topic_name, string topic_type) {
-		SubscribeTopicNameDictionary.Add(topic_name, topic_type);
+		//SubscribeTopicNameDictionary.Add(topic_name, topic_type);
 		Subscribe message = new Subscribe(topic_name, topic_type);
 		Send(JsonUtility.ToJson(message));
 	}
 
 	public void UnSubscriber(string topic_name) {
-		SubscribeTopicNameDictionary.Remove(topic_name);
+		//SubscribeTopicNameDictionary.Remove(topic_name);
 		UnSubscribe message = new UnSubscribe(topic_name);
 		Send(JsonUtility.ToJson(message));
 	}
 
 	public void ServiceAdvertiser(string service_name, string service_type) {
-		ServiceNameDictionary.Add(service_name, service_type);
+		//ServiceNameDictionary.Add(service_name, service_type);
 		AdvertiseService message = new AdvertiseService(service_name, service_type);
 		Send(JsonUtility.ToJson(message));
 		Debug.Log(JsonUtility.ToJson(message));
 	}
 
 	public void ServiceUnAdvertiser(string service_name) {
-		ServiceNameDictionary.Remove(service_name);
+		//ServiceNameDictionary.Remove(service_name);
 		UnAdvertiseService message = new UnAdvertiseService(service_name);
 		Send(JsonUtility.ToJson(message));
 		Debug.Log(JsonUtility.ToJson(message));
 	}
 
 	public void ServiceResponder(string service_name, string id, bool result, object values) {
-		ServiceResponse responce = new ServiceResponse(service_name, id, result);
-		string message = PushArgJson(responce, responce.values, values);
+		ServiceResponse response = new ServiceResponse(service_name, id, result);
+		string message = PushArgJson(response, response.values, values);
 		Send(message);
 	}
 

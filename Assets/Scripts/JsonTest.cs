@@ -280,12 +280,19 @@ public class JsonTest : MonoBehaviour {
 				subscribed = true;
 			}
 
-			if (RosSocketClient.IsReceiveTopic() && RosSocketClient.GetTopicWhichTopic() == "tms_db_data") {
-				responce_json = RosSocketClient.GetTopicMessage();
+			//if (RosSocketClient.IsReceiveTopic() && RosSocketClient.GetTopicWhichTopic() == "tms_db_data") {
+			KeyValuePair<bool, string> responce = RosSocketClient.GetTopicMessage("tms_db_data");
+			if (responce.Key) {
+				//responce_json = RosSocketClient.GetTopicMessage();
+				responce_json = responce.Value;
 				string responce_json_msg = RosSocketClient.GetJsonArg(responce_json, nameof(Publish.msg));
 				responce_value = JsonUtility.FromJson<TmsDBStamped>(responce_json_msg);
 
-				Debug.Log(responce_value.tmsdb[0].name);
+				Debug.Log(responce_value.tmsdb[1].name);
+				Debug.Log(responce_value.tmsdb[1].time);
+				Debug.Log(responce_value.tmsdb[1].x.ToString("f10"));
+				Debug.Log(responce_value.tmsdb[1].y.ToString("f10"));
+				Debug.Log(responce_value.tmsdb[1].z.ToString("f10"));
 			}
 
 			if (Application.isEditor) {
@@ -334,8 +341,11 @@ public class JsonTest : MonoBehaviour {
 				advertised_service = true;
 			}
 
-			if(RosSocketClient.IsReceiveServiceRequest() && RosSocketClient.GetServiceRequestWhichService() == "unity_test") {
-				string request_json = RosSocketClient.GetServiceRequestMessage();
+			//if(RosSocketClient.IsReceiveServiceRequest() && RosSocketClient.GetServiceRequestWhichService() == "unity_test") {
+			KeyValuePair<bool, string> message = RosSocketClient.GetServiceRequestMessage("unity_test");
+			if (message.Key) {
+				//string request_json = RosSocketClient.GetServiceRequestMessage();
+				string request_json = message.Value;
 				Debug.Log(request_json);
 
 				CallService request = JsonUtility.FromJson<CallService>(request_json);
