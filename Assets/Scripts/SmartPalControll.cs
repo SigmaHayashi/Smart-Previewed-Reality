@@ -121,6 +121,11 @@ public class SmartPalControll : MonoBehaviour {
 			finish_setting = true;
 		}
 
+		//最初の1回ポジショントラッキング
+		if (!finish_init_pos) {
+			PositionTracking();
+		}
+
 		/*
 		//キャリブが終わってからポジショントラッキングとバッテリー情報アクセスする
 		if (CalibrationSystem.FinishCalibration()) {
@@ -128,9 +133,6 @@ public class SmartPalControll : MonoBehaviour {
 			//UpdateBatteryInformation();
 		}
 		*/
-		if (!finish_init_pos) {
-			PositionTracking();
-		}
 
 		KeyValuePair<bool, string> request = RosSocketClient.GetServiceRequestMessage(service_name); // ROSからのリクエスト
 		if (request.Key) {
@@ -264,6 +266,7 @@ public class SmartPalControll : MonoBehaviour {
 			SubGoal = new float[] {
 				SubGoals[path_counter].x,
 				SubGoals[path_counter].y,
+				//SubGoals[path_counter].th
 				SubGoals[path_counter].th * -1
 			};
 			float[] current = new float[] {
@@ -313,7 +316,7 @@ public class SmartPalControll : MonoBehaviour {
 		//float error_th = SubGoal[2] - current[2];
 		float error_th = Mathf.DeltaAngle(current[2] * Mathf.Rad2Deg, SubGoal[2] * Mathf.Rad2Deg);
 
-		Debug.Log("error : " + error_x + ", " + error_y + ", " + error_th);
+		//Debug.Log("error : " + error_x + ", " + error_y + ", " + error_th);
 
 		if(Mathf.Abs(error_x) <= vx_t || sp5_move_speed_x == 0.0f) { // x
 			next[0] = current[0];
@@ -382,6 +385,7 @@ public class SmartPalControll : MonoBehaviour {
 		SubGoal = new float[] {
 			SubGoals[0].x,
 			SubGoals[0].y,
+			//SubGoals[0].th
 			SubGoals[0].th * -1
 		};
 
