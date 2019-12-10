@@ -407,63 +407,46 @@ public class RosSocketClient : MonoBehaviour {
 		int index_start_json = json.IndexOf(":", index) + 1;
 		return json.Substring(index_start_json, index_end_json - index_start_json + 1);
 	}
-
-	//受け取ったものをすべてListに入れて検索して取り出すスタイル
-	//Whereでインデックスを聞き出す，なかったら-1
-	//取り出したら消す
-	//取りこぼしが消えそう
-	//Topicみたいな無限に来るやつは大きさがいっぱいになったら捨てていく
 	
 	/**************************************************
 	 * ROSにメッセージを送るときのAPI
 	 **************************************************/
 	public void Advertiser(string topic_name, string topic_type) {
-		//PublishTopicNameDictionary.Add(topic_name, topic_type);
 		Advertise message = new Advertise(topic_name, topic_type);
 		Send(JsonUtility.ToJson(message));
 	}
 
 	public void UnAdvertiser(string topic_name) {
-		//PublishTopicNameDictionary.Remove(topic_name);
 		UnAdvertise message = new UnAdvertise(topic_name);
 		Send(JsonUtility.ToJson(message));
 	}
 
 	public void Publisher(string topic_name, object msg) {
-		//if (PublishTopicNameDictionary.ContainsKey(topic_name)) {
-			Publish publish = new Publish(topic_name);
-			string message = PushArgJson(publish, publish.msg, msg);
-			Send(message);
-		//}
-		//else {
-		//	Debug.Log("Error : Please Advertise Topic");
-		//}
+		Publish publish = new Publish(topic_name);
+		string message = PushArgJson(publish, publish.msg, msg);
+		Send(message);
 	}
 
 	public void Subscriber(string topic_name, string topic_type) {
-		//SubscribeTopicNameDictionary.Add(topic_name, topic_type);
 		Subscribe message = new Subscribe(topic_name, topic_type);
 		Send(JsonUtility.ToJson(message));
 	}
 
 	public void UnSubscriber(string topic_name) {
-		//SubscribeTopicNameDictionary.Remove(topic_name);
 		UnSubscribe message = new UnSubscribe(topic_name);
 		Send(JsonUtility.ToJson(message));
 	}
 
 	public void ServiceAdvertiser(string service_name, string service_type) {
-		//ServiceNameDictionary.Add(service_name, service_type);
 		AdvertiseService message = new AdvertiseService(service_name, service_type);
 		Send(JsonUtility.ToJson(message));
-		Debug.Log(JsonUtility.ToJson(message));
+		//Debug.Log(JsonUtility.ToJson(message));
 	}
 
 	public void ServiceUnAdvertiser(string service_name) {
-		//ServiceNameDictionary.Remove(service_name);
 		UnAdvertiseService message = new UnAdvertiseService(service_name);
 		Send(JsonUtility.ToJson(message));
-		Debug.Log(JsonUtility.ToJson(message));
+		//Debug.Log(JsonUtility.ToJson(message));
 	}
 
 	public void ServiceResponder(string service_name, string id, bool result, object values) {

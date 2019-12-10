@@ -109,11 +109,7 @@ public class SmartPalControll : MonoBehaviour {
 	 * Update()
 	 *****************************************************************/
 	void Update() {
-		if (!Main.FinishReadConfig()) {
-			return;
-		}
-
-		if (!CalibrationSystem.FinishCalibration()) {
+		if (!Main.FinishReadConfig() || !CalibrationSystem.FinishCalibration()) {
 			return;
 		}
 
@@ -133,14 +129,14 @@ public class SmartPalControll : MonoBehaviour {
 
 		KeyValuePair<bool, string> request = RosSocketClient.GetServiceRequestMessage(service_name); // ROSからのリクエスト
 		if (request.Key) {
-			Debug.Log(request.Value);
+			Debug.Log("Request : " + request.Value);
 			Sp5TaskManager(request.Value);
 			pr_flag = true;
 		}
 
 		KeyValuePair<bool, string> response = RosSocketClient.GetServiceResponseMessage(service_name_voronoi); // ServiceCallの結果
 		if (response.Key) {
-			Debug.Log(response.Value);
+			Debug.Log("Response : " + response.Value);
 			Sp5VoronoiPathServiceClient(response.Value);
 		}
 
@@ -177,9 +173,10 @@ public class SmartPalControll : MonoBehaviour {
 			path_counter = 1; // スタートかゴール
 			RpsPath pos_array = JsonUtility.FromJson<RpsPath>(args_json);
 			SubGoals = pos_array.VoronoiPath;
-			Debug.Log("Length : " + SubGoals.Length);
+
+			Debug.Log("SubGoals Length : " + SubGoals.Length);
 			foreach(RpsPosition subgoal in SubGoals) {
-				Debug.Log(subgoal.x + ", " + subgoal.y);
+				Debug.Log(subgoal.x.ToString("f4") + ", " + subgoal.y.ToString("f4"));
 			}
 
 			if (SubGoals.Length == 1) {
@@ -304,20 +301,26 @@ public class SmartPalControll : MonoBehaviour {
 		float vx_t = sp5_move_speed_x * Time.deltaTime;
 		float vy_t = sp5_move_speed_y * Time.deltaTime;
 		float wt = sp5_rot_speed * Time.deltaTime;
-		float error_x = SubGoal[0] - current[0];
-		float error_y = SubGoal[1] - current[1];
+		//float error_x = SubGoal[0] - current[0];
+		float error_x = current[0] - SubGoal[0];
+		//float error_y = SubGoal[1] - current[1];
+		float error_y = current[1] - SubGoal[1];
 		//float error_th = SubGoal[2] - current[2];
 		float error_th = Mathf.DeltaAngle(current[2] * Mathf.Rad2Deg, SubGoal[2] * Mathf.Rad2Deg);
+
+		Debug.Log("error : " + error_x + ", " + error_y + ", " + error_th);
 
 		if(Mathf.Abs(error_x) <= vx_t || sp5_move_speed_x == 0.0f) { // x
 			next[0] = current[0];
 			state++;
 		}
 		else if(error_x > 0) {
-			next[0] = current[0] + vx_t;
+			//next[0] = current[0] + vx_t;
+			next[0] = current[0] - vx_t;
 		}
 		else {
-			next[0] = current[0] - vx_t;
+			//next[0] = current[0] - vx_t;
+			next[0] = current[0] + vx_t;
 		}
 
 		if(Mathf.Abs(error_y) <= vy_t || sp5_move_speed_y == 0.0f) { // y
@@ -325,18 +328,21 @@ public class SmartPalControll : MonoBehaviour {
 			state++;
 		}
 		else if(error_y > 0) {
-			next[1] = current[1] + vy_t;
-		}
-		else {
+			//next[1] = current[1] + vy_t;
 			next[1] = current[1] - vy_t;
 		}
+		else {
+			//next[1] = current[1] - vy_t;
+			next[1] = current[1] + vy_t;
+		}
 
-		if(Mathf.Abs(error_th) <= wt * Mathf.Rad2Deg) { // th
+		//if(Mathf.Abs(error_th) <= wt) { // th
+		if(Mathf.Abs(error_th) <= wt * Mathf.Rad2Deg) {
 			next[2] = current[2];
 			state++;
 		}
 		else {
-			if(Math.Abs(error_th) > Mathf.PI) { error_th *= -1; }
+			//if(Math.Abs(error_th) > Mathf.PI) { error_th *= -1; }
 			if(error_th > 0) {
 				next[2] = current[2] + wt;
 			}
@@ -359,6 +365,7 @@ public class SmartPalControll : MonoBehaviour {
 	 *****************************************************************/
 	private void SetSp5Pos(float[] new_pos) {
 		transform.position = Ros2UnityPosition(new Vector3(new_pos[0], new_pos[1], 0.0f));
+		//transform.rotation = Quaternion.Euler(0.0f, new_pos[2], 0.0f);
 		transform.rotation = Quaternion.Euler(0.0f, new_pos[2] * Mathf.Rad2Deg, 0.0f);
 	}
 
