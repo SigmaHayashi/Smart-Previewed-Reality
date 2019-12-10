@@ -87,6 +87,8 @@ public class SmartPalControll : MonoBehaviour {
 	private bool finish_setting = false;
 	public bool IsFinishSetting() { return finish_setting; }
 
+	private bool finish_init_pos = false;
+
 	private float sleep_time = 0.0f;
 
 
@@ -126,6 +128,9 @@ public class SmartPalControll : MonoBehaviour {
 			//UpdateBatteryInformation();
 		}
 		*/
+		if (!finish_init_pos) {
+			PositionTracking();
+		}
 
 		KeyValuePair<bool, string> request = RosSocketClient.GetServiceRequestMessage(service_name); // ROSからのリクエスト
 		if (request.Key) {
@@ -259,7 +264,7 @@ public class SmartPalControll : MonoBehaviour {
 			SubGoal = new float[] {
 				SubGoals[path_counter].x,
 				SubGoals[path_counter].y,
-				SubGoals[path_counter].th
+				SubGoals[path_counter].th * -1
 			};
 			float[] current = new float[] {
 				transform.position.z,
@@ -377,7 +382,7 @@ public class SmartPalControll : MonoBehaviour {
 		SubGoal = new float[] {
 			SubGoals[0].x,
 			SubGoals[0].y,
-			SubGoals[0].th
+			SubGoals[0].th * -1
 		};
 
 		// 最終ゴールに移動
@@ -446,6 +451,8 @@ public class SmartPalControll : MonoBehaviour {
 				else {
 					Main.Information_UpdateBuffer_ViconSmartPalText("SmartPal\n" + "Pos : " + sp5_pos.ToString("f2") + " Yaw : " + sp5_euler.y.ToString("f2"));
 				}
+
+				finish_init_pos = true;
 			}
 		}
 	}
