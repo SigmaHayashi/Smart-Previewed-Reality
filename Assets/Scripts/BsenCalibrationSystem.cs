@@ -20,6 +20,7 @@ public class BsenCalibrationSystem : MonoBehaviour {
 	//GameObjectたち
 	private GameObject ARCoreDevice;
 	private GameObject IrvsMarker;
+	[SerializeField] private bool active_plane_discovery = false;
 
 	//B-senのモデルのShader制御用
 	private ShaderChange BsenModelShader;
@@ -72,6 +73,14 @@ public class BsenCalibrationSystem : MonoBehaviour {
 	void Update() {
 		if (!Main.FinishReadConfig()) {
 			return;
+		}
+
+		if (Application.isEditor) {
+			if (Input.GetKey(KeyCode.P)) {
+				//GameObject.Find("Plane Generator").transform.position = ARCoreDevice.transform.position;
+				//GameObject.Find("Plane Generator").transform.rotation = ARCoreDevice.transform.rotation;
+				ChangePlanePos();
+			}
 		}
 
 		switch (calibration_state) {
@@ -223,6 +232,8 @@ public class BsenCalibrationSystem : MonoBehaviour {
 					//自動キャリブ終了時の位置と回転を保存
 					not_offset_pos = ARCoreDevice.transform.position;
 					not_offset_yaw = ARCoreDevice.transform.eulerAngles.y;
+
+					ChangePlanePos();
 					break;
 			}
 		}
@@ -303,26 +314,32 @@ public class BsenCalibrationSystem : MonoBehaviour {
 				case "Pos X+ Button":
 					tmp = new Vector3(0.1f * Time.deltaTime, 0, 0);
 					ARCoreDevice.transform.position += tmp;
+					ChangePlanePos();
 					break;
 				case "Pos X- Button":
 					tmp = new Vector3(-0.1f * Time.deltaTime, 0, 0);
 					ARCoreDevice.transform.position += tmp;
+					ChangePlanePos();
 					break;
 				case "Pos Y+ Button":
 					tmp = new Vector3(0, 0.1f * Time.deltaTime, 0);
 					ARCoreDevice.transform.position += tmp;
+					ChangePlanePos();
 					break;
 				case "Pos Y- Button":
 					tmp = new Vector3(0, -0.1f * Time.deltaTime, 0);
 					ARCoreDevice.transform.position += tmp;
+					ChangePlanePos();
 					break;
 				case "Pos Z+ Button":
 					tmp = new Vector3(0, 0, 0.1f * Time.deltaTime);
 					ARCoreDevice.transform.position += tmp;
+					ChangePlanePos();
 					break;
 				case "Pos Z- Button":
 					tmp = new Vector3(0, 0, -0.1f * Time.deltaTime);
 					ARCoreDevice.transform.position += tmp;
+					ChangePlanePos();
 					break;
 				case "Rot Right Button": {
 					GameObject camera_object = new GameObject();
@@ -342,6 +359,7 @@ public class BsenCalibrationSystem : MonoBehaviour {
 
 					Destroy(camera_object);
 					Destroy(device_object);
+					ChangePlanePos();
 					break;
 				}
 				case "Rot Left Button": {
@@ -362,9 +380,20 @@ public class BsenCalibrationSystem : MonoBehaviour {
 
 					Destroy(camera_object);
 					Destroy(device_object);
+					ChangePlanePos();
 					break;
 				}
 			}
+		}
+	}
+
+	void ChangePlanePos() {
+		if (active_plane_discovery) {
+			GameObject.Find("Plane Generator").transform.position = ARCoreDevice.transform.position;
+			GameObject.Find("Plane Generator").transform.rotation = ARCoreDevice.transform.rotation;
+
+			GameObject.Find("PlaneDiscovery").transform.position = ARCoreDevice.transform.position;
+			GameObject.Find("PlaneDiscovery").transform.rotation = ARCoreDevice.transform.rotation;
 		}
 	}
 
