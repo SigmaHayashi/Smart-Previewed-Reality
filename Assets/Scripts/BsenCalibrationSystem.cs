@@ -20,7 +20,7 @@ public class BsenCalibrationSystem : MonoBehaviour {
 	//GameObjectたち
 	private GameObject ARCoreDevice;
 	private GameObject IrvsMarker;
-	[SerializeField] private bool active_plane_discovery = false;
+	[SerializeField] private readonly bool active_plane_discovery = false;
 
 	//B-senのモデルのShader制御用
 	private ShaderChange BsenModelShader;
@@ -205,8 +205,9 @@ public class BsenCalibrationSystem : MonoBehaviour {
 				//UnityEditor上ではここはスキップ
 				case State.SearchImage:
 					if (Application.isEditor) {
-						BsenModelShader.alpha = 0.6f;
-						BsenModelShader.ChangeColors();
+						//BsenModelShader.alpha = 0.6f;
+						//BsenModelShader.ChangeColors();
+						BsenModelShader.ChangeToOriginColors(0.6f);
 
 						calibration_state = State.Ready;
 						finish_calibration = true;
@@ -220,8 +221,9 @@ public class BsenCalibrationSystem : MonoBehaviour {
 
 								AutoPositioning();
 
-								BsenModelShader.alpha = 0.6f;
-								BsenModelShader.ChangeColors();
+								//BsenModelShader.alpha = 0.6f;
+								//BsenModelShader.ChangeColors();
+								BsenModelShader.ChangeToOriginColors(0.6f);
 
 								calibration_state = State.Ready;
 								finish_calibration = true;

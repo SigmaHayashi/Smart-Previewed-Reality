@@ -47,6 +47,13 @@ enum Mode {
 	GRIPPER = 3
 }
 
+enum SafetyLevel {
+	NONE,
+	NOT_MOVE,
+	SAFE,
+	DANGER
+}
+
 
 public class SmartPalControll : MonoBehaviour {
 
@@ -91,6 +98,14 @@ public class SmartPalControll : MonoBehaviour {
 
 	private float sleep_time = 0.0f;
 
+	//色周り
+	private ShaderChange SmartPalShader;
+	private Color safety_color = new Color32(60, 180, 230, 170);
+	private Color danger_color = new Color32(200, 0, 0, 170);
+	private float danger_distance = 2.0f;
+	private SafetyLevel safety_level = SafetyLevel.NONE;
+	private List<GameObject> SmartPalPartsList = new List<GameObject>();
+
 
 	/*****************************************************************
 	 * Start()
@@ -104,6 +119,9 @@ public class SmartPalControll : MonoBehaviour {
 		CalibrationSystem = GameObject.Find("Main System").GetComponent<BsenCalibrationSystem>();
 		RosSocketClient = GameObject.Find("Ros Socket Client").GetComponent<RosSocketClient>();
 		DBAccessManager = GameObject.Find("Ros Socket Client").GetComponent<DBAccessManager>();
+
+		SmartPalShader = transform.gameObject.GetComponent<ShaderChange>();
+		GetAllChildren(transform.gameObject, ref SmartPalPartsList);
 	}
 	
 
@@ -124,6 +142,10 @@ public class SmartPalControll : MonoBehaviour {
 		//最初の1回ポジショントラッキング
 		if (!finish_init_pos) {
 			PositionTracking();
+			if (safety_level == SafetyLevel.NONE) {
+				SmartPalShader.ChangeToOriginColors(0.6f);
+				safety_level = SafetyLevel.NOT_MOVE;
+			}
 		}
 
 		/*
@@ -148,6 +170,7 @@ public class SmartPalControll : MonoBehaviour {
 		}
 
 		if(mode != Mode.Ready) {
+			Sp5ColorManager();
 			if (pr_flag) {
 				switch (mode) {
 					case Mode.MOVE:
@@ -157,6 +180,12 @@ public class SmartPalControll : MonoBehaviour {
 			}
 			else {
 				Sp5Sleep(1.8f);
+			}
+		}
+		else {
+			if(safety_level != SafetyLevel.NOT_MOVE) {
+				SmartPalShader.ChangeToOriginColors(0.6f);
+				safety_level = SafetyLevel.NOT_MOVE;
 			}
 		}
 	}
@@ -519,15 +548,53 @@ public class SmartPalControll : MonoBehaviour {
 	*/
 
 	/*****************************************************************
+	 * 色の変更をマネジメントする
+	 *****************************************************************/
+	private void Sp5ColorManager() {
+		float min_distance = CalcDistance(transform.gameObject, Camera.main.transform.gameObject);
+		foreach(GameObject parts in SmartPalPartsList) {
+			float distance = CalcDistance(parts, Camera.main.transform.gameObject);
+			if(distance < min_distance) {
+				min_distance = distance;
+			}
+		}
+
+		if(min_distance > danger_distance) {
+			if(safety_level != SafetyLevel.SAFE) {
+				SmartPalShader.ChangeColors(safety_color);
+				safety_level = SafetyLevel.SAFE;
+			}
+		}
+		else {
+			if(safety_level != SafetyLevel.DANGER) {
+				SmartPalShader.ChangeColors(danger_color);
+				safety_level = SafetyLevel.DANGER;
+			}
+		}
+	}
+
+	/*****************************************************************
+	 * すべての子オブジェクトを取得
+	 *****************************************************************/
+	private void GetAllChildren(GameObject parent, ref List<GameObject> childrens) {
+		Transform children = parent.GetComponentInChildren<Transform>();
+		if (children.childCount == 0) {
+			return;
+		}
+		foreach (Transform ob in children) {
+			childrens.Add(ob.gameObject);
+			GetAllChildren(ob.gameObject, ref childrens);
+		}
+	}
+
+	/*****************************************************************
 	 * オブジェクトどうしの距離を計算
 	 *****************************************************************/
-	/*
-	float CalcDistance(GameObject obj_a, GameObject obj_b) {
+	private float CalcDistance(GameObject obj_a, GameObject obj_b) {
 		Vector3 obj_a_pos = obj_a.transform.position;
 		Vector3 obj_b_pos = obj_b.transform.position;
 		return Mathf.Sqrt(Mathf.Pow((obj_a_pos.x - obj_b_pos.x), 2) + Mathf.Pow((obj_a_pos.z - obj_b_pos.z), 2));
 	}
-	*/
 
 	/*****************************************************************
 	 * ROSの座標系（右手系）からUnityの座標系（左手系）への変換
