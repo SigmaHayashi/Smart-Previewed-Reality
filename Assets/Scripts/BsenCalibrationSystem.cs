@@ -101,8 +101,8 @@ public class BsenCalibrationSystem : MonoBehaviour {
 				else { Main.Main_UpdateBuffer_InfoText("Please Look[IRVS Marker]"); }
 				break;
 			case State.Ready:
-				if (Main.WhichCanvasActive() == CanvasName.MainCanvas) { MainCanvas.Change_InfoText("Ready to AR B-sen"); }
-				else { Main.Main_UpdateBuffer_InfoText("Ready to AR B-sen"); }
+				if (Main.WhichCanvasActive() == CanvasName.MainCanvas) { MainCanvas.Change_InfoText("Ready to Previewed Reality"); }
+				else { Main.Main_UpdateBuffer_InfoText("Ready to Previewed Reality"); }
 				break;
 			default:
 				if (Main.WhichCanvasActive() == CanvasName.MainCanvas) { MainCanvas.Change_InfoText("Error : " + calibration_state.ToString()); }
@@ -207,7 +207,8 @@ public class BsenCalibrationSystem : MonoBehaviour {
 					if (Application.isEditor) {
 						//BsenModelShader.alpha = 0.6f;
 						//BsenModelShader.ChangeColors();
-						BsenModelShader.ChangeToOriginColors(0.6f);
+						//BsenModelShader.ChangeToOriginColors(0.6f);
+						BsenModelShader.ChangeToOriginColors(Main.GetConfig().room_alpha);
 
 						calibration_state = State.Ready;
 						finish_calibration = true;
@@ -223,7 +224,8 @@ public class BsenCalibrationSystem : MonoBehaviour {
 
 								//BsenModelShader.alpha = 0.6f;
 								//BsenModelShader.ChangeColors();
-								BsenModelShader.ChangeToOriginColors(0.6f);
+								//BsenModelShader.ChangeToOriginColors(0.6f);
+								BsenModelShader.ChangeToOriginColors(Main.GetConfig().room_alpha);
 
 								calibration_state = State.Ready;
 								finish_calibration = true;

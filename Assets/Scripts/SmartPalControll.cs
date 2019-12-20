@@ -100,9 +100,9 @@ public class SmartPalControll : MonoBehaviour {
 
 	//色周り
 	private ShaderChange SmartPalShader;
-	private Color safety_color = new Color32(60, 180, 230, 170);
+	private Color safe_color = new Color32(60, 180, 230, 170);
 	private Color danger_color = new Color32(200, 0, 0, 170);
-	private float danger_distance = 2.0f;
+	//private float safety_distance = 2.0f;
 	private SafetyLevel safety_level = SafetyLevel.NONE;
 	private List<GameObject> SmartPalPartsList = new List<GameObject>();
 
@@ -143,7 +143,8 @@ public class SmartPalControll : MonoBehaviour {
 		if (!finish_init_pos) {
 			PositionTracking();
 			if (safety_level == SafetyLevel.NONE) {
-				SmartPalShader.ChangeToOriginColors(0.6f);
+				//SmartPalShader.ChangeToOriginColors(0.6f);
+				SmartPalShader.ChangeToOriginColors(Main.GetConfig().robot_alpha);
 				safety_level = SafetyLevel.NOT_MOVE;
 			}
 		}
@@ -184,7 +185,8 @@ public class SmartPalControll : MonoBehaviour {
 		}
 		else {
 			if(safety_level != SafetyLevel.NOT_MOVE) {
-				SmartPalShader.ChangeToOriginColors(0.6f);
+				//SmartPalShader.ChangeToOriginColors(0.6f);
+				SmartPalShader.ChangeToOriginColors(Main.GetConfig().robot_alpha);
 				safety_level = SafetyLevel.NOT_MOVE;
 			}
 		}
@@ -559,16 +561,16 @@ public class SmartPalControll : MonoBehaviour {
 			}
 		}
 
-		if(min_distance > danger_distance) {
-			if(safety_level != SafetyLevel.SAFE) {
-				SmartPalShader.ChangeColors(safety_color);
-				safety_level = SafetyLevel.SAFE;
-			}
-		}
-		else {
+		if(min_distance < Main.GetConfig().safety_distance) {
 			if(safety_level != SafetyLevel.DANGER) {
 				SmartPalShader.ChangeColors(danger_color);
 				safety_level = SafetyLevel.DANGER;
+			}
+		}
+		else {
+			if(safety_level != SafetyLevel.SAFE) {
+				SmartPalShader.ChangeColors(safe_color);
+				safety_level = SafetyLevel.SAFE;
 			}
 		}
 	}
