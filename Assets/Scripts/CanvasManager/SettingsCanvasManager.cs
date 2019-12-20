@@ -157,6 +157,14 @@ public class SettingsCanvasManager : MonoBehaviour {
 		config_data.room_alpha = float.Parse(RoomAlphaInput.text);
 		config_data.robot_alpha = float.Parse(RobotAlphaInput.text);
 
+		if (config_data.safety_distance < 0.0f) { config_data.safety_distance = 0.0f; }
+
+		if (config_data.room_alpha < 0.0f) { config_data.room_alpha = 0.0f; }
+		else if (config_data.room_alpha > 1.0f) { config_data.room_alpha = 1.0f; }
+
+		if (config_data.robot_alpha < 0.0f) { config_data.robot_alpha = 0.0f; }
+		else if (config_data.robot_alpha > 1.0f) { config_data.robot_alpha = 1.0f; }
+
 		string config_json = JsonUtility.ToJson(config_data);
 
 		using (FileStream file = new FileStream(config_filepath, FileMode.Create, FileAccess.Write)) {
