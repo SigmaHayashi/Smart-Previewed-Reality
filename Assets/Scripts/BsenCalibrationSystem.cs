@@ -20,7 +20,7 @@ public class BsenCalibrationSystem : MonoBehaviour {
 	//GameObjectたち
 	private GameObject ARCoreDevice;
 	private GameObject IrvsMarker;
-	[SerializeField] private readonly bool active_plane_discovery = false;
+	private readonly bool active_plane_discovery = false;
 
 	//B-senのモデルのShader制御用
 	private ShaderChange BsenModelShader;
@@ -241,9 +241,18 @@ public class BsenCalibrationSystem : MonoBehaviour {
 					break;
 			}
 		}
-		else { //手動キャリブ
+		else { // 自動キャリブ終了後
 			if(Main.WhichCanvasActive() == CanvasName.CalibrationCanvas) {
-				ManualCalibration();
+				ManualCalibration(); //手動キャリブ
+
+				if (CalibrationCanvas.IsChengedDisplayRoomToggle()) {
+					if (CalibrationCanvas.IsOnDisplayToggle()) {
+						BsenModelShader.ChangeToOriginColors(Main.GetConfig().room_alpha);
+					}
+					else {
+						BsenModelShader.ChangeToOriginColors(0.0f);
+					}
+				}
 			}
 		}
 	}
