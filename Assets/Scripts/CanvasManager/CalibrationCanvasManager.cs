@@ -48,7 +48,7 @@ public class CalibrationCanvasManager : MonoBehaviour {
 
 		//Canvas遷移ボタンを取得・設定
 		BackToMainButton = GameObject.Find("Main System/Calibration Canvas/Horizontal_0/Vertical_1/Back To Main Button").GetComponent<Button>();
-		BackToMainButton.onClick.AddListener(Main.ChageToMain);
+		BackToMainButton.onClick.AddListener(Main.ChangeToMain);
 
 		//UIを取得・設定
 		OffsetInfoText = GameObject.Find("Main System/Calibration Canvas/Horizontal_0/Vertical_0/Offset Info Text").GetComponent<Text>();

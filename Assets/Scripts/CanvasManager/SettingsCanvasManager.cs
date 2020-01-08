@@ -55,7 +55,7 @@ public class SettingsCanvasManager : MonoBehaviour {
 		//Canvas遷移ボタンを取得・設定
 		BackToMainButton = GameObject.Find("Main System/Settings Canvas/Horizontal_0/Vertical_0/Back To Main Button").GetComponent<Button>();
 		RestartAppButton = GameObject.Find("Main System/Settings Canvas/Horizontal_0/Vertical_0/Restart App Button").GetComponent<Button>();
-		BackToMainButton.onClick.AddListener(Main.ChageToMain);
+		BackToMainButton.onClick.AddListener(Main.ChangeToMain);
 		RestartAppButton.onClick.AddListener(RestartApp);
 
 		//UIを取得・設定

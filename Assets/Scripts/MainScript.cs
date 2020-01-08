@@ -159,7 +159,7 @@ public class MainScript : MonoBehaviour {
 	/**************************************************
 	 * 画面の切り替え：Main Canvas
 	 **************************************************/
-	public void ChageToMain() {
+	public void ChangeToMain() {
 		CanvasDictionary[active_canvas].SetActive(false);
 		active_canvas = CanvasName.MainCanvas;
 		CanvasDictionary[active_canvas].SetActive(true);
@@ -180,7 +180,7 @@ public class MainScript : MonoBehaviour {
 	/**************************************************
 	 * 画面の切り替え：Calibration Canvas
 	 **************************************************/
-	public void ChageToCalibration() {
+	public void ChangeToCalibration() {
 		CanvasDictionary[active_canvas].SetActive(false);
 		active_canvas = CanvasName.CalibrationCanvas;
 		CanvasDictionary[active_canvas].SetActive(true);
