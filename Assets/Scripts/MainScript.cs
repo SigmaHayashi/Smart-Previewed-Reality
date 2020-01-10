@@ -173,8 +173,21 @@ public class MainScript : MonoBehaviour {
 	/**************************************************
 	 * バッファ更新：Main Canvas
 	 **************************************************/
+	/*
 	public void Main_UpdateBuffer_InfoText(string message) {
 		main_info_text_buffer = message;
+	}
+	*/
+	/**************************************************
+	 * Main CanvasのAPI
+	 **************************************************/
+	public void Main_Change_InfoText(string message) {
+		if(WhichCanvasActive() == CanvasName.MainCanvas) {
+			MainCanvas.Change_InfoText(message);
+		}
+		else {
+			main_info_text_buffer = message;
+		}
 	}
 
 	/**************************************************
@@ -202,6 +215,7 @@ public class MainScript : MonoBehaviour {
 	/**************************************************
 	 * バッファ更新：Calibration Canvas
 	 **************************************************/
+	/*
 	public void Calibration_UpdateBuffer_OffsetInfoText(string message) {
 		calibration_offsetinfo_text_buffer = message;
 	}
@@ -212,6 +226,36 @@ public class MainScript : MonoBehaviour {
 
 	public void Calibration_UpdateBuffer_CameraInfoText(string message) {
 		calibration_camerainfo_text_buffer = message;
+	}
+	*/
+	/**************************************************
+	 * Calibration CanvasのAPI
+	 **************************************************/
+	public void Calibration_Change_OffsetInfoText(string message) {
+		if (WhichCanvasActive() == CanvasName.CalibrationCanvas) {
+			CalibrationCanvas.Change_OffsetInfoText(message);
+		}
+		else {
+			calibration_offsetinfo_text_buffer = message;
+		}
+	}
+
+	public void Calibration_Change_DeviceInfoText(string message) {
+		if (WhichCanvasActive() == CanvasName.CalibrationCanvas) {
+			CalibrationCanvas.Change_DeviceInfoText(message);
+		}
+		else {
+			calibration_deviceinfo_text_buffer = message;
+		}
+	}
+
+	public void Calibration_Change_CameraInfoText(string message) {
+		if (WhichCanvasActive() == CanvasName.CalibrationCanvas) {
+			CalibrationCanvas.Change_CameraInfoText(message);
+		}
+		else {
+			calibration_camerainfo_text_buffer = message;
+		}
 	}
 
 	/**************************************************
@@ -233,6 +277,7 @@ public class MainScript : MonoBehaviour {
 	/**************************************************
 	 * バッファ更新：MyConsole Canvas
 	 **************************************************/
+	/*
 	public void MyConsole_UpdateBuffer_Delete() {
 		myconsole_delete_buffer = true;
 		MyConsole_Message_Buffer = new List<object>();
@@ -240,6 +285,28 @@ public class MainScript : MonoBehaviour {
 
 	public void MyConsole_UpdateBuffer_Message(object message) {
 		MyConsole_Message_Buffer.Add(message);
+	}
+	*/
+	/**************************************************
+	 * MyConsole CanvasのAPI
+	 **************************************************/
+	public void MyConsole_Add(object message) {
+		if (WhichCanvasActive() == CanvasName.MyConsoleCanvas) {
+			MyConsoleCanvas.Add(message);
+		}
+		else {
+			MyConsole_Message_Buffer.Add(message);
+		}
+	}
+
+	public void MyConsole_Delete() {
+		if (WhichCanvasActive() == CanvasName.MyConsoleCanvas) {
+			MyConsoleCanvas.Delete();
+		}
+		else {
+			myconsole_delete_buffer = true;
+			MyConsole_Message_Buffer = new List<object>();
+		}
 	}
 
 	/**************************************************
@@ -263,12 +330,34 @@ public class MainScript : MonoBehaviour {
 	/**************************************************
 	 * バッファ更新：Information Canvas
 	 **************************************************/
+	/*
 	public void Information_UpdateBuffer_ViconIrvsMarkerText(string message) {
 		information_vicon_irvsmarker_text_buffer = message;
 	}
 
 	public void Information_UpdateBuffer_ViconSmartPalText(string message) {
 		information_vicon_smartpal_text_buffer = message;
+	}
+	*/
+	/**************************************************
+	 * Information CanvasのAPI
+	 **************************************************/
+	public void Information_Change_Vicon_IrvsMarkerInfoText(string message) {
+		if (WhichCanvasActive() == CanvasName.InformationCanvas) {
+			InformationCanvas.Change_Vicon_IrvsMarkerInfoText(message);
+		}
+		else {
+			information_vicon_irvsmarker_text_buffer = message;
+		}
+	}
+
+	public void Information_Change_Vicon_SmartPalInfoText(string message) {
+		if (WhichCanvasActive() == CanvasName.InformationCanvas) {
+			InformationCanvas.Change_Vicon_SmartPalInfoText(message);
+		}
+		else {
+			information_vicon_smartpal_text_buffer = message;
+		}
 	}
 
 	/**************************************************

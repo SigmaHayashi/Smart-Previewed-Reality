@@ -9,10 +9,10 @@ public class BsenCalibrationSystem : MonoBehaviour {
 
 	//UI制御用
 	private MainScript Main;
-	private MainCanvasManager MainCanvas;
+	//private MainCanvasManager MainCanvas;
 	private CalibrationCanvasManager CalibrationCanvas;
-	private InformationCanvasManager InformationCanvas;
-	private MyConsoleCanvasManager MyConsoleCanvas;
+	//private InformationCanvasManager InformationCanvas;
+	//private MyConsoleCanvasManager MyConsoleCanvas;
 
 	//通信制御用
 	private DBAccessManager DBAccessManager;
@@ -52,10 +52,10 @@ public class BsenCalibrationSystem : MonoBehaviour {
 	// 最初の1回呼び出されるよ～
 	void Start() {
 		Main = GameObject.Find("Main System").GetComponent<MainScript>();
-		MainCanvas = GameObject.Find("Main System/Main Canvas").GetComponent<MainCanvasManager>();
+		//MainCanvas = GameObject.Find("Main System/Main Canvas").GetComponent<MainCanvasManager>();
 		CalibrationCanvas = GameObject.Find("Main System/Calibration Canvas").GetComponent<CalibrationCanvasManager>();
-		InformationCanvas = GameObject.Find("Main System/Information Canvas").GetComponent<InformationCanvasManager>();
-		MyConsoleCanvas = GameObject.Find("Main System/MyConsole Canvas").GetComponent<MyConsoleCanvasManager>();
+		//InformationCanvas = GameObject.Find("Main System/Information Canvas").GetComponent<InformationCanvasManager>();
+		//MyConsoleCanvas = GameObject.Find("Main System/MyConsole Canvas").GetComponent<MyConsoleCanvasManager>();
 
 		//DBAccessManager = GameObject.Find("Android Ros Socket Client").GetComponent<DBAccessManager>();
 		DBAccessManager = GameObject.Find("Ros Socket Client").GetComponent<DBAccessManager>();
@@ -85,28 +85,34 @@ public class BsenCalibrationSystem : MonoBehaviour {
 
 		switch (calibration_state) {
 			case State.Start:
-				if (Main.WhichCanvasActive() == CanvasName.MainCanvas) { MainCanvas.Change_InfoText("Fail to Start"); }
-				else { Main.Main_UpdateBuffer_InfoText("Fail to Start"); }
+				//if (Main.WhichCanvasActive() == CanvasName.MainCanvas) { MainCanvas.Change_InfoText("Fail to Start"); }
+				//else { Main.Main_UpdateBuffer_InfoText("Fail to Start"); }
+				Main.Main_Change_InfoText("Fail to Start");
 				break;
 			case State.TryToConnect:
-				if (Main.WhichCanvasActive() == CanvasName.MainCanvas) { MainCanvas.Change_InfoText("Can NOT Connect [" + Main.GetConfig().ros_ip + "]"); }
-				else { Main.Main_UpdateBuffer_InfoText("Can NOT Connect [" + Main.GetConfig().ros_ip + "]"); }
+				//if (Main.WhichCanvasActive() == CanvasName.MainCanvas) { MainCanvas.Change_InfoText("Can NOT Connect [" + Main.GetConfig().ros_ip + "]"); }
+				//else { Main.Main_UpdateBuffer_InfoText("Can NOT Connect [" + Main.GetConfig().ros_ip + "]"); }
+				Main.Main_Change_InfoText("Can NOT Connect [" + Main.GetConfig().ros_ip + "]");
 				break;
 			case State.TryToAccessDatabase:
-				if (Main.WhichCanvasActive() == CanvasName.MainCanvas) { MainCanvas.Change_InfoText("Access to Database"); }
-				else { Main.Main_UpdateBuffer_InfoText("Access to Database"); }
+				//if (Main.WhichCanvasActive() == CanvasName.MainCanvas) { MainCanvas.Change_InfoText("Access to Database"); }
+				//else { Main.Main_UpdateBuffer_InfoText("Access to Database"); }
+				Main.Main_Change_InfoText("Access to Database");
 				break;
 			case State.SearchImage:
-				if (Main.WhichCanvasActive() == CanvasName.MainCanvas) { MainCanvas.Change_InfoText("Please Look [IRVS Marker]"); }
-				else { Main.Main_UpdateBuffer_InfoText("Please Look[IRVS Marker]"); }
+				//if (Main.WhichCanvasActive() == CanvasName.MainCanvas) { MainCanvas.Change_InfoText("Please Look [IRVS Marker]"); }
+				//else { Main.Main_UpdateBuffer_InfoText("Please Look[IRVS Marker]"); }
+				Main.Main_Change_InfoText("Please Look[IRVS Marker]");
 				break;
 			case State.Ready:
-				if (Main.WhichCanvasActive() == CanvasName.MainCanvas) { MainCanvas.Change_InfoText("Ready to Previewed Reality"); }
-				else { Main.Main_UpdateBuffer_InfoText("Ready to Previewed Reality"); }
+				//if (Main.WhichCanvasActive() == CanvasName.MainCanvas) { MainCanvas.Change_InfoText("Ready to Previewed Reality"); }
+				//else { Main.Main_UpdateBuffer_InfoText("Ready to Previewed Reality"); }
+				Main.Main_Change_InfoText("Ready to Previewed Reality");
 				break;
 			default:
-				if (Main.WhichCanvasActive() == CanvasName.MainCanvas) { MainCanvas.Change_InfoText("Error : " + calibration_state.ToString()); }
-				else { Main.Main_UpdateBuffer_InfoText("Error : " + calibration_state.ToString()); }
+				//if (Main.WhichCanvasActive() == CanvasName.MainCanvas) { MainCanvas.Change_InfoText("Error : " + calibration_state.ToString()); }
+				//else { Main.Main_UpdateBuffer_InfoText("Error : " + calibration_state.ToString()); }
+				Main.Main_Change_InfoText("Error : " + calibration_state.ToString());
 				break;
 		}
 
@@ -122,6 +128,7 @@ public class BsenCalibrationSystem : MonoBehaviour {
 		float offset_yaw = ARCoreDevice.transform.eulerAngles.y - not_offset_yaw;
 
 		//Calibration CanvasのText更新
+		/*
 		if (Main.WhichCanvasActive() == CanvasName.CalibrationCanvas) {
 			CalibrationCanvas.Change_CameraInfoText("Camera Info\n" + "Pos : " + Camera.main.transform.position.ToString("f2") + " Yaw : " + Camera.main.transform.eulerAngles.y.ToString("f2"));
 			CalibrationCanvas.Change_DeviceInfoText("Device Info\n" + "Pos : " + ARCoreDevice.transform.position.ToString("f2") + " Yaw : " + ARCoreDevice.transform.eulerAngles.y.ToString("f2"));
@@ -132,6 +139,10 @@ public class BsenCalibrationSystem : MonoBehaviour {
 			Main.Calibration_UpdateBuffer_DeviceInfoText("Device Info\n" + "Pos : " + ARCoreDevice.transform.position.ToString("f2") + " Yaw : " + ARCoreDevice.transform.eulerAngles.y.ToString("f2"));
 			Main.Calibration_UpdateBuffer_OffsetInfoText("Offset Info\n" + "Pos : " + offset_pos.ToString("f2") + " Yaw : " + offset_yaw.ToString("f2"));
 		}
+		*/
+		Main.Calibration_Change_CameraInfoText("Camera Info\n" + "Pos : " + Camera.main.transform.position.ToString("f2") + " Yaw : " + Camera.main.transform.eulerAngles.y.ToString("f2"));
+		Main.Calibration_Change_DeviceInfoText("Device Info\n" + "Pos : " + ARCoreDevice.transform.position.ToString("f2") + " Yaw : " + ARCoreDevice.transform.eulerAngles.y.ToString("f2"));
+		Main.Calibration_Change_OffsetInfoText("Offset Info\n" + "Pos : " + offset_pos.ToString("f2") + " Yaw : " + offset_yaw.ToString("f2"));
 
 		//自動キャリブ終了前
 		if (!FinishCalibration()) {
@@ -165,8 +176,9 @@ public class BsenCalibrationSystem : MonoBehaviour {
 						marker_position += Main.GetConfig().vicon_offset_pos;
 						marker_position += Main.GetConfig().calibration_offset_pos;
 						Debug.Log("Marker Pos: " + marker_position);
-						if(Main.WhichCanvasActive() == CanvasName.MyConsoleCanvas) { MyConsoleCanvas.Add("Marker Pos: " + marker_position.ToString("f4")); }
-						else { Main.MyConsole_UpdateBuffer_Message("Marker Pos: " + marker_position.ToString("f4")); }
+						//if(Main.WhichCanvasActive() == CanvasName.MyConsoleCanvas) { MyConsoleCanvas.Add("Marker Pos: " + marker_position.ToString("f4")); }
+						//else { Main.MyConsole_UpdateBuffer_Message("Marker Pos: " + marker_position.ToString("f4")); }
+						Main.MyConsole_Add("Marker Pos: " + marker_position.ToString("f4"));
 
 						//回転を取得＆変換
 						Vector3 marker_euler = new Vector3(
@@ -184,11 +196,13 @@ public class BsenCalibrationSystem : MonoBehaviour {
 						marker_euler.z = 0.0f;
 						marker_euler.y += Main.GetConfig().calibration_offset_yaw;
 						Debug.Log("Marker Rot: " + marker_euler);
-						if(Main.WhichCanvasActive() == CanvasName.MyConsoleCanvas) { MyConsoleCanvas.Add("Marker Rot: " + marker_euler.ToString("f4")); }
-						else { Main.MyConsole_UpdateBuffer_Message("Marker Rot: " + marker_euler.ToString("f4")); }
+						//if(Main.WhichCanvasActive() == CanvasName.MyConsoleCanvas) { MyConsoleCanvas.Add("Marker Rot: " + marker_euler.ToString("f4")); }
+						//else { Main.MyConsole_UpdateBuffer_Message("Marker Rot: " + marker_euler.ToString("f4")); }
+						Main.MyConsole_Add("Marker Rot: " + marker_euler.ToString("f4"));
 
-						if(Main.WhichCanvasActive() == CanvasName.InformationCanvas) { InformationCanvas.Change_Vicon_IrvsMarkerInfoText("IRVS Marker\n" + "Pos : " + marker_position.ToString("f2") + " Yaw : " + marker_euler.y.ToString("f2")); }
-						else { Main.Information_UpdateBuffer_ViconIrvsMarkerText("IRVS Marker\n" + "Pos : " + marker_position.ToString("f2") + " Yaw : " + marker_euler.y.ToString("f2")); }
+						//if(Main.WhichCanvasActive() == CanvasName.InformationCanvas) { InformationCanvas.Change_Vicon_IrvsMarkerInfoText("IRVS Marker\n" + "Pos : " + marker_position.ToString("f2") + " Yaw : " + marker_euler.y.ToString("f2")); }
+						//else { Main.Information_UpdateBuffer_ViconIrvsMarkerText("IRVS Marker\n" + "Pos : " + marker_position.ToString("f2") + " Yaw : " + marker_euler.y.ToString("f2")); }
+						Main.Information_Change_Vicon_IrvsMarkerInfoText("IRVS Marker\n" + "Pos : " + marker_position.ToString("f2") + " Yaw : " + marker_euler.y.ToString("f2"));
 
 						//位置と回転をモデル上のマーカーに適用
 						IrvsMarker = Instantiate(new GameObject());
