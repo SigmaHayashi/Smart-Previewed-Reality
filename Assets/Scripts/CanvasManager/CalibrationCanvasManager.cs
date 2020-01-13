@@ -32,6 +32,9 @@ public class CalibrationCanvasManager : MonoBehaviour {
 	private bool push_z_minus = false;
 	private bool push_rot_right = false;
 	private bool push_rot_left = false;
+	private Toggle DisplayRoomToggle;
+	private bool changed_display_room_toggle = false;
+	public bool IsChengedDisplayRoomToggle() { return changed_display_room_toggle; }
 
 	//Startが終わったかどうか
 	private bool finish_start = false;
@@ -45,7 +48,7 @@ public class CalibrationCanvasManager : MonoBehaviour {
 
 		//Canvas遷移ボタンを取得・設定
 		BackToMainButton = GameObject.Find("Main System/Calibration Canvas/Horizontal_0/Vertical_1/Back To Main Button").GetComponent<Button>();
-		BackToMainButton.onClick.AddListener(Main.ChageToMain);
+		BackToMainButton.onClick.AddListener(Main.ChangeToMain);
 
 		//UIを取得・設定
 		OffsetInfoText = GameObject.Find("Main System/Calibration Canvas/Horizontal_0/Vertical_0/Offset Info Text").GetComponent<Text>();
@@ -68,6 +71,9 @@ public class CalibrationCanvasManager : MonoBehaviour {
 		AddTrigger(PosZMinusButton);
 		AddTrigger(RotRightButton);
 		AddTrigger(RotLeftButton);
+
+		DisplayRoomToggle = GameObject.Find("Main System/Calibration Canvas/Horizontal_0/Vertical_0/Horizontal_0/Display Room Toggle").GetComponent<Toggle>();
+		DisplayRoomToggle.onValueChanged.AddListener((x) => { changed_display_room_toggle = true; });
 
 		finish_start = true;
 	}
@@ -156,5 +162,10 @@ public class CalibrationCanvasManager : MonoBehaviour {
 		if (push_rot_right) { PushedButtonList.Add(RotRightButton.name); }
 		if (push_rot_left) { PushedButtonList.Add(RotLeftButton.name); }
 		return PushedButtonList;
+	}
+
+	public bool IsOnDisplayToggle() {
+		changed_display_room_toggle = false;
+		return DisplayRoomToggle.isOn;
 	}
 }

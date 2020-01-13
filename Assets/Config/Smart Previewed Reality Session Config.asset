@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Smart Previewed Reality Session Config
   m_EditorClassIdentifier: 
   MatchCameraFramerate: 1
-  PlaneFindingMode: 1
+  PlaneFindingMode: 0
   LightEstimationMode: 0
   EnableCloudAnchor: 0
   AugmentedImageDatabase: {fileID: 11400000, guid: 1b899d8ec84063a468f78d28dc56e40a,

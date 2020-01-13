@@ -130,6 +130,7 @@ public class DBAccessManager : MonoBehaviour {
 
 	private bool wait_vicon_irvs_marker = false;
 	private bool wait_vicon_smartpal = false;
+	private bool wait_chipstar = false;
 
 	//private ServiceResponseDB responce;
 
@@ -168,6 +169,10 @@ public class DBAccessManager : MonoBehaviour {
 
 				if (wait_vicon_smartpal) {
 					WaitResponce(0.5f);
+				}
+
+				if (wait_chipstar) {
+					WaitResponce(1.0f);
 				}
 			}
 		}
@@ -301,4 +306,33 @@ public class DBAccessManager : MonoBehaviour {
 	}
 
 	public bool CheckWaitViconSmartPal() { return wait_vicon_smartpal; }
+
+	/**************************************************
+	 * Read ChipStar
+	 **************************************************/
+	public IEnumerator ReadChipstar() {
+		wait_anything = access_db = wait_chipstar = true;
+		time_access = 0.0f;
+
+		/*
+		ServiceRequest.tmsdb = new TmsDB(TmsDBSerchMode.ID_SENSOR, 2003, 3001);
+		ServiceCallerDB(ServiceRequest);
+		*/
+		TmsDBArgs args = new TmsDBArgs() {
+			tmsdb = new TmsDB(TmsDBSerchMode.ID_SENSOR, 7001, 3003)
+		};
+		RosSocketClient.ServiceCaller(service_name, args);
+
+		while (access_db) {
+			yield return null;
+		}
+
+		while (success_access || abort_access) {
+			yield return null;
+		}
+
+		wait_anything = wait_chipstar = false;
+	}
+
+	public bool CheckWaitChipstar() { return wait_chipstar; }
 }

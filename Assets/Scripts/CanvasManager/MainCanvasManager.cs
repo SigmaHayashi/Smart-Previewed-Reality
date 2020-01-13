@@ -31,7 +31,7 @@ public class MainCanvasManager : MonoBehaviour {
 		ChangeToMyConsoleButton = GameObject.Find("Main System/Main Canvas/Horizontal_0/Vertical_0/Change To MyConsole Button").GetComponent<Button>();
 		ChangeToInformationButton = GameObject.Find("Main System/Main Canvas/Horizontal_0/Vertical_0/Change To Information Button").GetComponent<Button>();
 		ChangeToSettingsButton = GameObject.Find("Main System/Main Canvas/Horizontal_0/Vertical_0/Change To Settings Button").GetComponent<Button>();
-		ChangeToCalibrationButton.onClick.AddListener(Main.ChageToCalibration);
+		ChangeToCalibrationButton.onClick.AddListener(Main.ChangeToCalibration);
 		ChangeToMyConsoleButton.onClick.AddListener(Main.ChangeToMyConsole);
 		ChangeToInformationButton.onClick.AddListener(Main.ChangeToInformation);
 		ChangeToSettingsButton.onClick.AddListener(Main.ChangeToSettings);

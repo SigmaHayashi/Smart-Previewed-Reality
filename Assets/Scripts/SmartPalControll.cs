@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.Animations;
 
 //バッテリー情報を取得するためのクラス
 /*
@@ -47,13 +48,20 @@ enum Mode {
 	GRIPPER = 3
 }
 
+enum SafetyLevel {
+	NONE,
+	NOT_MOVE,
+	SAFE,
+	DANGER
+}
+
 
 public class SmartPalControll : MonoBehaviour {
 
 	//UI制御用
 	private MainScript Main;
-	private MyConsoleCanvasManager MyConsoleCanvas;
-	private InformationCanvasManager InformationCanvas;
+	//private MyConsoleCanvasManager MyConsoleCanvas;
+	//private InformationCanvasManager InformationCanvas;
 
 	//キャリブシステム
 	private BsenCalibrationSystem CalibrationSystem;
@@ -61,8 +69,8 @@ public class SmartPalControll : MonoBehaviour {
 	//RosSocketClientまわり
 	private RosSocketClient RosSocketClient;
 	private DBAccessManager DBAccessManager;
-	private float time_position_tracking;
-
+	private float time_position_tracking = 0.0f;
+	private float time_chipstar = 0.0f;
 
 	//ROSのサービス名・サービスタイプの宣言
 	private readonly string service_name = "sp5_control_unity";
@@ -70,6 +78,11 @@ public class SmartPalControll : MonoBehaviour {
 
 	private readonly string service_name_voronoi = "rps_voronoi_path_planning";
 	//private readonly string service_type_voronoi = "tms_msg_rp/rps_voronoi_path_planning";
+
+	private readonly string service_name_arm = "sp5_arm_control_uwp";
+	private readonly string service_type_arm = "tms_msg_rc/sp5_control_unity";
+
+	private string service_arm_id;
 	
 	//Previewedの中枢
 	private bool pr_flag = false;
@@ -84,12 +97,36 @@ public class SmartPalControll : MonoBehaviour {
 	private float sp5_move_speed_y = 0.1f; // [m/s]
 	private readonly float sp5_rot_speed = 0.16f;   // [rad/s]
 
+	//Armまわり
+	private readonly GameObject[] LeftArm_joints = new GameObject[8];
+	private GameObject LeftGripper;
+	private GameObject LeftEndEffector;
+	private readonly Quaternion[] LeftArm_init_quart = new Quaternion[8];
+	private readonly Quaternion[] LeftArm_target_quart = new Quaternion[8];
+	private readonly float sp5_arm_speed = 0.175f; // [rad/s]
+	private readonly float sp5_gripper_speed = 0.175f; // [rad/s]
+	private int grasping = 0;
+
+	//ChipStar
+	private GameObject Chipstar;
+	private ShaderChange ChipstarShader;
+
+	// スクリプト制御
 	private bool finish_setting = false;
 	public bool IsFinishSetting() { return finish_setting; }
 
 	private bool finish_init_pos = false;
+	private bool finish_init_chipstar_pos = false;
 
 	private float sleep_time = 0.0f;
+
+	//色周り
+	private ShaderChange SmartPalShader;
+	private Color safe_color = new Color32(60, 180, 230, 170);
+	private Color danger_color = new Color32(200, 0, 0, 170);
+	//private float safety_distance = 2.0f;
+	private SafetyLevel safety_level = SafetyLevel.NONE;
+	private List<GameObject> SmartPalPartsList = new List<GameObject>();
 
 
 	/*****************************************************************
@@ -98,12 +135,33 @@ public class SmartPalControll : MonoBehaviour {
 	void Start() {
 		//各種オブジェクトを取得
 		Main = GameObject.Find("Main System").GetComponent<MainScript>();
-		MyConsoleCanvas = GameObject.Find("Main System/MyConsole Canvas").GetComponent<MyConsoleCanvasManager>();
-		InformationCanvas = GameObject.Find("Main System/Information Canvas").GetComponent<InformationCanvasManager>();
+		//MyConsoleCanvas = GameObject.Find("Main System/MyConsole Canvas").GetComponent<MyConsoleCanvasManager>();
+		//InformationCanvas = GameObject.Find("Main System/Information Canvas").GetComponent<InformationCanvasManager>();
 
 		CalibrationSystem = GameObject.Find("Main System").GetComponent<BsenCalibrationSystem>();
 		RosSocketClient = GameObject.Find("Ros Socket Client").GetComponent<RosSocketClient>();
 		DBAccessManager = GameObject.Find("Ros Socket Client").GetComponent<DBAccessManager>();
+
+		SmartPalShader = transform.gameObject.GetComponent<ShaderChange>();
+		GetAllChildren(transform.gameObject, ref SmartPalPartsList);
+
+		for(int i = 0; i < 7; i++) {
+			LeftArm_joints[i] = GameObject.Find(string.Format("l_arm_j{0}_link", i + 1));
+			LeftArm_init_quart[i] = LeftArm_joints[i].transform.localRotation;
+		}
+		LeftArm_joints[7] = GameObject.Find("l_gripper_thumb_link");
+		LeftArm_init_quart[7] = LeftArm_joints[7].transform.localRotation;
+
+		LeftArm_joints[1].transform.localRotation = LeftArm_init_quart[1] * Quaternion.Euler(0.0f, -4.0f, 0.0f);
+
+		GameObject RightArm_joint_1 = GameObject.Find("r_arm_j2_link");
+		RightArm_joint_1.transform.localRotation = RightArm_joint_1.transform.localRotation * Quaternion.Euler(0.0f, 4.0f, 0.0f);
+
+		LeftEndEffector = GameObject.Find("l_end_effector_link");
+		LeftGripper = GameObject.Find("l_gripper_link");
+
+		Chipstar = GameObject.Find("chipstar_red");
+		ChipstarShader = Chipstar.GetComponent<ShaderChange>();
 	}
 	
 
@@ -118,12 +176,23 @@ public class SmartPalControll : MonoBehaviour {
 		//サービスをROSに登録
 		if (!finish_setting) {
 			RosSocketClient.ServiceAdvertiser(service_name, service_type);
+			RosSocketClient.ServiceAdvertiser(service_name_arm, service_type_arm);
 			finish_setting = true;
 		}
 
 		//最初の1回ポジショントラッキング
 		if (!finish_init_pos) {
 			PositionTracking();
+			if (safety_level == SafetyLevel.NONE) {
+				//SmartPalShader.ChangeToOriginColors(0.6f);
+				SmartPalShader.ChangeToOriginColors(Main.GetConfig().robot_alpha);
+				safety_level = SafetyLevel.NOT_MOVE;
+			}
+		}
+
+		//最初の1回チップスターの位置をデータベースから取得
+		if (!finish_init_chipstar_pos) {
+			InitChipstarPosition();
 		}
 
 		/*
@@ -148,15 +217,29 @@ public class SmartPalControll : MonoBehaviour {
 		}
 
 		if(mode != Mode.Ready) {
+			Sp5ColorManager();
 			if (pr_flag) {
 				switch (mode) {
 					case Mode.MOVE:
 						Sp5Move();
 						break;
+					case Mode.ARM:
+						Sp5TrajectoryArm();
+						break;
+					case Mode.GRIPPER:
+						Sp5TrajectoryGripper();
+						break;
 				}
 			}
 			else {
 				Sp5Sleep(1.8f);
+			}
+		}
+		else {
+			if(safety_level != SafetyLevel.NOT_MOVE) {
+				//SmartPalShader.ChangeToOriginColors(0.6f);
+				SmartPalShader.ChangeToOriginColors(Main.GetConfig().robot_alpha);
+				safety_level = SafetyLevel.NOT_MOVE;
 			}
 		}
 	}
@@ -197,10 +280,43 @@ public class SmartPalControll : MonoBehaviour {
 			mode = Mode.MOVE;
 			Sp5PathFollower();
 		}
+		else if (request.service == service_name_arm) {
+			float[] sub_goals_arm = JsonUtility.FromJson<float[]>(args_json);
+			service_arm_id = request.id;
+			if (sub_goals_arm.Length == 1) { // MOVE_TRAJECTORY_GRIPPER
+				mode = Mode.GRIPPER;
+				sub_goals_arm[0] *= -1;
+				sub_goals_arm[0] = sub_goals_arm[0] * Mathf.Rad2Deg;
+				sub_goals_arm[0] = Mathf.DeltaAngle(0, sub_goals_arm[0]);
+				LeftArm_target_quart[7] = LeftArm_init_quart[7] * Quaternion.Euler(0.0f, sub_goals_arm[0], 0.0f);
+			}
+			else if (sub_goals_arm.Length == 7) { // MOVE_TRAJECTORY_ARM
+				mode = Mode.ARM;
+				sub_goals_arm[0] *= -1;
+				sub_goals_arm[3] *= -1;
+				sub_goals_arm[5] *= -1;
+				sub_goals_arm[6] *= -1;
+				for (int i = 0; i < 7; i++) {
+					sub_goals_arm[i] = sub_goals_arm[i] * Mathf.Rad2Deg;
+					sub_goals_arm[i] = Mathf.DeltaAngle(0, sub_goals_arm[i]);
+					LeftArm_target_quart[i] = LeftArm_init_quart[i] * Quaternion.Euler(0.0f, sub_goals_arm[i], 0.0f);
+				}
+			}
+			else {
+				int i = 0;
+				foreach (float sub_goal_arm in sub_goals_arm) {
+					Debug.Log("Sub Goal Arm (" + i + ") : " + sub_goal_arm);
+					Main.MyConsole_Add("Sub Goal Arm (" + i + ") : " + sub_goal_arm);
+					i++;
+				}
+				Debug.LogError("!--- Illegal Values are sent (Arm navigation) ---!");
+			}
+		}
 		else {
 			Debug.LogError("!--- Illegal command is received ---!");
-			if (Main.WhichCanvasActive() == CanvasName.MyConsoleCanvas) { MyConsoleCanvas.Add("!--- Illegal command is received ---!"); }
-			else { Main.MyConsole_UpdateBuffer_Message("!--- Illegal command is received ---!"); }
+			//if (Main.WhichCanvasActive() == CanvasName.MyConsoleCanvas) { MyConsoleCanvas.Add("!--- Illegal command is received ---!"); }
+			//else { Main.MyConsole_UpdateBuffer_Message("!--- Illegal command is received ---!"); }
+			Main.MyConsole_Add("!--- Illegal command is received ---!");
 		}
 	}
 
@@ -239,8 +355,9 @@ public class SmartPalControll : MonoBehaviour {
 			if (error_dis <= 0.01 && error_th <= 0.05) { // 終了させる
 				pr_flag = false;
 				Debug.Log("Sp5 Arrived the Goal");
-				if (Main.WhichCanvasActive() == CanvasName.MyConsoleCanvas) { MyConsoleCanvas.Add("Sp5 Arrived the Goal"); }
-				else { Main.MyConsole_UpdateBuffer_Message("Sp5 Arrived the Goal"); }
+				//if (Main.WhichCanvasActive() == CanvasName.MyConsoleCanvas) { MyConsoleCanvas.Add("Sp5 Arrived the Goal"); }
+				//else { Main.MyConsole_UpdateBuffer_Message("Sp5 Arrived the Goal"); }
+				Main.MyConsole_Add("Sp5 Arrived the Goal");
 				return;
 			}
 			else { // 経路をアップデートするためにVoronoi Path Plannerを呼びだす
@@ -276,6 +393,7 @@ public class SmartPalControll : MonoBehaviour {
 			};
 
 			Debug.Log("subGoal[" + path_counter + "] : " + SubGoal[0] + ", " + SubGoal[1] + ", " + SubGoal[2]);
+			Main.MyConsole_Add("subGoal[" + path_counter + "] : " + SubGoal[0] + ", " + SubGoal[1] + ", " + SubGoal[2]);
 
 			float dis_x = Mathf.Abs(SubGoal[0] - current[0]);
 			float dis_y = Mathf.Abs(SubGoal[1] - current[1]);
@@ -394,6 +512,113 @@ public class SmartPalControll : MonoBehaviour {
 	}
 
 	/*****************************************************************
+	 * SmartPalの腕の動作が完了したかどうかの判定
+	 *****************************************************************/
+	private void Sp5TrajectoryArm() {
+		bool rotation_equal_target = true;
+		for (int i = 0; i < 7; i++) {
+			if (LeftArm_joints[i].transform.localRotation != LeftArm_target_quart[i]) {
+				rotation_equal_target = false;
+				break;
+			}
+		}
+		if (rotation_equal_target) {
+			pr_flag = false;
+
+			Values value_arm = new Values() { result = 1 };
+			RosSocketClient.ServiceResponder(service_name_arm, service_arm_id, true, value_arm);
+			service_arm_id = "";
+			mode = Mode.Ready;
+		}
+
+		SetSp5Arm();
+	}
+
+	/*****************************************************************
+	 * SmartPalの腕を目標角度に向かって動かす
+	 *****************************************************************/
+	private void SetSp5Arm() {
+		for (int i = 0; i < 7; i++) {
+			LeftArm_joints[i].transform.localRotation = Quaternion.RotateTowards(LeftArm_joints[i].transform.localRotation, LeftArm_target_quart[i], sp5_arm_speed * Time.deltaTime);
+		}
+	}
+
+	/*****************************************************************
+	 * SmartPalのグリッパの動作が完了したかどうかの判定
+	 *****************************************************************/
+	private void Sp5TrajectoryGripper() {
+		if (LeftArm_joints[7].transform.localRotation == LeftArm_target_quart[7]) {
+			pr_flag = false;
+
+			Values value_gripper = new Values() { result = 1 };
+			RosSocketClient.ServiceResponder(service_name_arm, service_arm_id, true, value_gripper);
+			service_arm_id = "";
+			mode = Mode.Ready;
+		}
+
+		SetSp5Gripper();
+	}
+
+	/*****************************************************************
+	 * SmartPalのグリッパを目標角度に向かって動かし，チップスターを掴んだり離したりする
+	 *****************************************************************/
+	private void SetSp5Gripper() {
+		float temp_y = LeftArm_joints[7].transform.localRotation.eulerAngles.y;
+		LeftArm_joints[7].transform.localRotation = Quaternion.RotateTowards(LeftArm_joints[7].transform.localRotation, LeftArm_target_quart[7], sp5_gripper_speed * Time.deltaTime);
+
+		if (grasping != 0) {
+			if (grasping == 7001) {
+				if (LeftArm_joints[7].transform.localRotation.eulerAngles.y > 45.0f) {
+					ReleaseChipstar();
+				}
+			}
+		}
+		else {
+			if ((LeftEndEffector.transform.position - Chipstar.transform.position).magnitude < 0.15) {
+				if (LeftArm_joints[7].transform.localRotation.eulerAngles.y <= 40.0f &&
+					LeftArm_joints[7].transform.localRotation.eulerAngles.y < temp_y) {
+					CatchChipstar();
+				}
+			}
+		}
+	}
+
+	/*****************************************************************
+	 * チップスターを掴む
+	 *****************************************************************/
+	private void CatchChipstar() {
+		Vector3 chipstar_gripper_pos = new Vector3(-0.123f, -0.03f, 0.04f);
+		Chipstar.transform.position = LeftGripper.transform.TransformPoint(chipstar_gripper_pos);
+		Chipstar.transform.rotation = LeftGripper.transform.rotation;
+
+		ParentConstraint ChipstarParentConstraint = Chipstar.GetComponent<ParentConstraint>();
+		ChipstarParentConstraint.enabled = true;
+		ChipstarParentConstraint.translationAtRest = Chipstar.transform.position;
+		ChipstarParentConstraint.rotationAtRest = Chipstar.transform.rotation.eulerAngles;
+
+		ChipstarParentConstraint.SetTranslationOffset(0, chipstar_gripper_pos);
+		ChipstarParentConstraint.SetRotationOffset(0, new Vector3());
+		ChipstarParentConstraint.weight = 1.0f;
+		ChipstarParentConstraint.constraintActive = true;
+
+		grasping = 7001;
+	}
+
+	/*****************************************************************
+	 * チップスターを離す
+	 *****************************************************************/
+	private void ReleaseChipstar() {
+		ParentConstraint ChipstarParentConstraint = Chipstar.GetComponent<ParentConstraint>();
+		ChipstarParentConstraint.constraintActive = false;
+		ChipstarParentConstraint.weight = 0.0f;
+
+		Rigidbody ChipstarRigidbody = Chipstar.GetComponent<Rigidbody>();
+		ChipstarRigidbody.isKinematic = false;
+
+		grasping = 0;
+	}
+
+	/*****************************************************************
 	 * SmartPalを指定時間分止めておく
 	 *****************************************************************/
 	private void Sp5Sleep(float timeout) {
@@ -441,6 +666,7 @@ public class SmartPalControll : MonoBehaviour {
 
 				Debug.Log(responce_value.tmsdb[0].name + " pos: " + sp5_pos);
 				Debug.Log(responce_value.tmsdb[0].name + " eul: " + sp5_euler);
+				/*
 				if (Main.WhichCanvasActive() == CanvasName.MyConsoleCanvas) {
 					MyConsoleCanvas.Add(responce_value.tmsdb[0].name + " pos: " + sp5_pos);
 					MyConsoleCanvas.Add(responce_value.tmsdb[0].name + " eul: " + sp5_euler);
@@ -449,12 +675,19 @@ public class SmartPalControll : MonoBehaviour {
 					Main.MyConsole_UpdateBuffer_Message(responce_value.tmsdb[0].name + " pos: " + sp5_pos);
 					Main.MyConsole_UpdateBuffer_Message(responce_value.tmsdb[0].name + " eul: " + sp5_euler);
 				}
-				if(Main.WhichCanvasActive() == CanvasName.InformationCanvas) {
+				*/
+				Main.MyConsole_Add(responce_value.tmsdb[0].name + " pos: " + sp5_pos);
+				Main.MyConsole_Add(responce_value.tmsdb[0].name + " eul: " + sp5_euler);
+
+				/*
+				if (Main.WhichCanvasActive() == CanvasName.InformationCanvas) {
 					InformationCanvas.Change_Vicon_SmartPalInfoText("SmartPal\n" + "Pos : " + sp5_pos.ToString("f2") + " Yaw : " + sp5_euler.y.ToString("f2"));
 				}
 				else {
 					Main.Information_UpdateBuffer_ViconSmartPalText("SmartPal\n" + "Pos : " + sp5_pos.ToString("f2") + " Yaw : " + sp5_euler.y.ToString("f2"));
 				}
+				*/
+				Main.Information_Change_Vicon_SmartPalInfoText("SmartPal\n" + "Pos : " + sp5_pos.ToString("f2") + " Yaw : " + sp5_euler.y.ToString("f2"));
 
 				finish_init_pos = true;
 			}
@@ -519,15 +752,85 @@ public class SmartPalControll : MonoBehaviour {
 	*/
 
 	/*****************************************************************
+	 * DBからチップスターの位置を取得
+	 *****************************************************************/
+	private void InitChipstarPosition() {
+		time_chipstar += Time.deltaTime;
+		if (!DBAccessManager.CheckWaitAnything() && time_position_tracking > 1.0f) {
+			time_chipstar = 0.0f;
+			IEnumerator coroutine = DBAccessManager.ReadChipstar();
+			StartCoroutine(coroutine);
+		}
+
+		if (DBAccessManager.CheckWaitChipstar()) {
+			if (DBAccessManager.CheckAbort()) {
+				DBAccessManager.FinishAccess();
+			}
+
+			if (DBAccessManager.CheckSuccess()) {
+				DBValue response_value = DBAccessManager.GetResponceValue();
+				DBAccessManager.FinishAccess();
+				Vector3 chipstar_pos = new Vector3((float)response_value.tmsdb[0].x, (float)response_value.tmsdb[0].y, (float)response_value.tmsdb[0].z);
+				chipstar_pos = Ros2UnityPosition(chipstar_pos);
+				Chipstar.transform.position = chipstar_pos;
+
+				Debug.Log("ChipStar pos : " + chipstar_pos);
+
+				ChipstarShader.ChangeToOriginColors(Main.GetConfig().robot_alpha);
+
+				finish_init_chipstar_pos = true;
+			}
+		}
+	}
+
+	/*****************************************************************
+	 * 色の変更をマネジメントする
+	 *****************************************************************/
+	private void Sp5ColorManager() {
+		float min_distance = CalcDistance(transform.gameObject, Camera.main.transform.gameObject);
+		foreach(GameObject parts in SmartPalPartsList) {
+			float distance = CalcDistance(parts, Camera.main.transform.gameObject);
+			if(distance < min_distance) {
+				min_distance = distance;
+			}
+		}
+
+		if(min_distance < Main.GetConfig().safety_distance) {
+			if(safety_level != SafetyLevel.DANGER) {
+				SmartPalShader.ChangeColors(danger_color);
+				safety_level = SafetyLevel.DANGER;
+			}
+		}
+		else {
+			if(safety_level != SafetyLevel.SAFE) {
+				SmartPalShader.ChangeColors(safe_color);
+				safety_level = SafetyLevel.SAFE;
+			}
+		}
+	}
+
+	/*****************************************************************
+	 * すべての子オブジェクトを取得
+	 *****************************************************************/
+	private void GetAllChildren(GameObject parent, ref List<GameObject> childrens) {
+		Transform children = parent.GetComponentInChildren<Transform>();
+		if (children.childCount == 0) {
+			return;
+		}
+		foreach (Transform ob in children) {
+			childrens.Add(ob.gameObject);
+			GetAllChildren(ob.gameObject, ref childrens);
+		}
+	}
+
+	/*****************************************************************
 	 * オブジェクトどうしの距離を計算
 	 *****************************************************************/
-	/*
-	float CalcDistance(GameObject obj_a, GameObject obj_b) {
+	private float CalcDistance(GameObject obj_a, GameObject obj_b) {
 		Vector3 obj_a_pos = obj_a.transform.position;
 		Vector3 obj_b_pos = obj_b.transform.position;
 		return Mathf.Sqrt(Mathf.Pow((obj_a_pos.x - obj_b_pos.x), 2) + Mathf.Pow((obj_a_pos.z - obj_b_pos.z), 2));
 	}
-	*/
 
 	/*****************************************************************
 	 * ROSの座標系（右手系）からUnityの座標系（左手系）への変換

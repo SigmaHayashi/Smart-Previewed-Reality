@@ -13,6 +13,9 @@ public class SmartPreviewedRealityConfig {
 	public float calibration_offset_yaw = 0.0f;
 	public Vector3 robot_offset_pos = new Vector3();
 	public float robot_offset_yaw = 0.0f;
+	public float safety_distance = 1.0f;
+	public float room_alpha = 1.0f;
+	public float robot_alpha = 1.0f;
 }
 
 public class SettingsCanvasManager : MonoBehaviour {
@@ -35,6 +38,9 @@ public class SettingsCanvasManager : MonoBehaviour {
 	private readonly InputField[] ViconOffsetInput = new InputField[3];
 	private readonly InputField[] CalibrationOffsetInput = new InputField[4];
 	private readonly InputField[] RobotOffsetInput = new InputField[4];
+	private InputField SafetyDistanceInput;
+	private InputField RoomAlphaInput;
+	private InputField RobotAlphaInput;
 
 	//Startが終わったかどうか
 	private bool finish_start = false;
@@ -49,7 +55,7 @@ public class SettingsCanvasManager : MonoBehaviour {
 		//Canvas遷移ボタンを取得・設定
 		BackToMainButton = GameObject.Find("Main System/Settings Canvas/Horizontal_0/Vertical_0/Back To Main Button").GetComponent<Button>();
 		RestartAppButton = GameObject.Find("Main System/Settings Canvas/Horizontal_0/Vertical_0/Restart App Button").GetComponent<Button>();
-		BackToMainButton.onClick.AddListener(Main.ChageToMain);
+		BackToMainButton.onClick.AddListener(Main.ChangeToMain);
 		RestartAppButton.onClick.AddListener(RestartApp);
 
 		//UIを取得・設定
@@ -60,6 +66,9 @@ public class SettingsCanvasManager : MonoBehaviour {
 			CalibrationOffsetInput[i] = GameObject.Find(string.Format("Main System/Settings Canvas/Horizontal_0/Info Area/Horizontal_0/Vertical_0/Scroll View/Scroll Contents/Calibration Offset/Input_{0}", i)).GetComponent<InputField>();
 			RobotOffsetInput[i] = GameObject.Find(string.Format("Main System/Settings Canvas/Horizontal_0/Info Area/Horizontal_0/Vertical_0/Scroll View/Scroll Contents/Robot Offset/Input_{0}", i)).GetComponent<InputField>();
 		}
+		SafetyDistanceInput = GameObject.Find("Main System/Settings Canvas/Horizontal_0/Info Area/Horizontal_0/Vertical_0/Scroll View/Scroll Contents/Safety Distance/Input_0").GetComponent<InputField>();
+		RoomAlphaInput = GameObject.Find("Main System/Settings Canvas/Horizontal_0/Info Area/Horizontal_0/Vertical_0/Scroll View/Scroll Contents/Room Model Color Alpha/Input_0").GetComponent<InputField>();
+		RobotAlphaInput = GameObject.Find("Main System/Settings Canvas/Horizontal_0/Info Area/Horizontal_0/Vertical_0/Scroll View/Scroll Contents/Robot Model Color Alpha/Input_0").GetComponent<InputField>();
 
 		RosIpInput.onValueChanged.AddListener(ActivateRestartButton);
 		ScreenNotSleepToggle.onValueChanged.AddListener(ActivateRestartButton);
@@ -68,6 +77,9 @@ public class SettingsCanvasManager : MonoBehaviour {
 			CalibrationOffsetInput[i].onValueChanged.AddListener(ActivateRestartButton);
 			RobotOffsetInput[i].onValueChanged.AddListener(ActivateRestartButton);
 		}
+		SafetyDistanceInput.onValueChanged.AddListener(ActivateRestartButton);
+		RoomAlphaInput.onValueChanged.AddListener(ActivateRestartButton);
+		RobotAlphaInput.onValueChanged.AddListener(ActivateRestartButton);
 
 		//コンフィグファイル読み込み
 		config_filepath = Application.persistentDataPath + "/Smart Previewed Reality Config.JSON";
@@ -96,6 +108,9 @@ public class SettingsCanvasManager : MonoBehaviour {
 				}
 				CalibrationOffsetInput[3].text = config_data.calibration_offset_yaw.ToString("f2");
 				RobotOffsetInput[3].text = config_data.robot_offset_yaw.ToString("f2");
+				SafetyDistanceInput.text = config_data.safety_distance.ToString("f2");
+				RoomAlphaInput.text = config_data.room_alpha.ToString("f2");
+				RobotAlphaInput.text = config_data.robot_alpha.ToString("f2");
 			}
 		}
 
@@ -138,6 +153,17 @@ public class SettingsCanvasManager : MonoBehaviour {
 			float.Parse(RobotOffsetInput[1].text),
 			float.Parse(RobotOffsetInput[2].text));
 		config_data.robot_offset_yaw = float.Parse(RobotOffsetInput[3].text);
+		config_data.safety_distance = float.Parse(SafetyDistanceInput.text);
+		config_data.room_alpha = float.Parse(RoomAlphaInput.text);
+		config_data.robot_alpha = float.Parse(RobotAlphaInput.text);
+
+		if (config_data.safety_distance < 0.0f) { config_data.safety_distance = 0.0f; }
+
+		if (config_data.room_alpha < 0.0f) { config_data.room_alpha = 0.0f; }
+		else if (config_data.room_alpha > 1.0f) { config_data.room_alpha = 1.0f; }
+
+		if (config_data.robot_alpha < 0.0f) { config_data.robot_alpha = 0.0f; }
+		else if (config_data.robot_alpha > 1.0f) { config_data.robot_alpha = 1.0f; }
 
 		string config_json = JsonUtility.ToJson(config_data);
 
