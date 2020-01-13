@@ -37,6 +37,13 @@ public class RpsVoronoiPathPlanning {
 }
 
 [Serializable]
+public class ArmControlArgs {
+	public int cmd;
+	public int unit;
+	public float[] arg;
+}
+
+[Serializable]
 public class Values {
 	public int result;
 }
@@ -210,6 +217,13 @@ public class SmartPalControll : MonoBehaviour {
 			pr_flag = true;
 		}
 
+		KeyValuePair<bool, string> request_arm = RosSocketClient.GetServiceRequestMessage(service_name_arm); // ROSからのリクエスト
+		if (request_arm.Key) {
+			Debug.Log("Request : " + request_arm.Value);
+			Sp5TaskManager(request_arm.Value);
+			pr_flag = true;
+		}
+
 		KeyValuePair<bool, string> response = RosSocketClient.GetServiceResponseMessage(service_name_voronoi); // ServiceCallの結果
 		if (response.Key) {
 			Debug.Log("Response : " + response.Value);
@@ -281,7 +295,8 @@ public class SmartPalControll : MonoBehaviour {
 			Sp5PathFollower();
 		}
 		else if (request.service == service_name_arm) {
-			float[] sub_goals_arm = JsonUtility.FromJson<float[]>(args_json);
+			//float[] sub_goals_arm = JsonUtility.FromJson<float[]>(args_json);
+			float[] sub_goals_arm = JsonUtility.FromJson<ArmControlArgs>(args_json).arg;
 			service_arm_id = request.id;
 			if (sub_goals_arm.Length == 1) { // MOVE_TRAJECTORY_GRIPPER
 				mode = Mode.GRIPPER;
@@ -539,7 +554,7 @@ public class SmartPalControll : MonoBehaviour {
 	 *****************************************************************/
 	private void SetSp5Arm() {
 		for (int i = 0; i < 7; i++) {
-			LeftArm_joints[i].transform.localRotation = Quaternion.RotateTowards(LeftArm_joints[i].transform.localRotation, LeftArm_target_quart[i], sp5_arm_speed * Time.deltaTime);
+			LeftArm_joints[i].transform.localRotation = Quaternion.RotateTowards(LeftArm_joints[i].transform.localRotation, LeftArm_target_quart[i], sp5_arm_speed * Mathf.Rad2Deg * Time.deltaTime);
 		}
 	}
 
@@ -564,7 +579,7 @@ public class SmartPalControll : MonoBehaviour {
 	 *****************************************************************/
 	private void SetSp5Gripper() {
 		float temp_y = LeftArm_joints[7].transform.localRotation.eulerAngles.y;
-		LeftArm_joints[7].transform.localRotation = Quaternion.RotateTowards(LeftArm_joints[7].transform.localRotation, LeftArm_target_quart[7], sp5_gripper_speed * Time.deltaTime);
+		LeftArm_joints[7].transform.localRotation = Quaternion.RotateTowards(LeftArm_joints[7].transform.localRotation, LeftArm_target_quart[7], sp5_gripper_speed * Mathf.Rad2Deg * Time.deltaTime);
 
 		if (grasping != 0) {
 			if (grasping == 7001) {
@@ -756,10 +771,11 @@ public class SmartPalControll : MonoBehaviour {
 	 *****************************************************************/
 	private void InitChipstarPosition() {
 		time_chipstar += Time.deltaTime;
-		if (!DBAccessManager.CheckWaitAnything() && time_position_tracking > 1.0f) {
+		if (!DBAccessManager.CheckWaitAnything() && time_chipstar > 1.0f) {
 			time_chipstar = 0.0f;
 			IEnumerator coroutine = DBAccessManager.ReadChipstar();
 			StartCoroutine(coroutine);
+			Debug.Log("Chipstar READ");
 		}
 
 		if (DBAccessManager.CheckWaitChipstar()) {
