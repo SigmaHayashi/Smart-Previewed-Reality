@@ -21,6 +21,7 @@ public class BsenCalibrationSystem : MonoBehaviour {
 	private GameObject ARCoreDevice;
 	private GameObject IrvsMarker;
 	private readonly bool active_plane_discovery = false;
+	private GameObject BsenModel;
 
 	//B-senのモデルのShader制御用
 	private ShaderChange BsenModelShader;
@@ -62,6 +63,7 @@ public class BsenCalibrationSystem : MonoBehaviour {
 
 		ARCoreDevice = GameObject.Find("ARCore Device");
 
+		BsenModel = GameObject.Find("rostms");
 		BsenModelShader = GameObject.Find("rostms").GetComponent<ShaderChange>();
 
 		calibration_state = State.TryToConnect;
@@ -261,10 +263,13 @@ public class BsenCalibrationSystem : MonoBehaviour {
 
 				if (CalibrationCanvas.IsChengedDisplayRoomToggle()) {
 					if (CalibrationCanvas.IsOnDisplayToggle()) {
-						BsenModelShader.ChangeToOriginColors(Main.GetConfig().room_alpha);
+						//BsenModelShader.ChangeToOriginColors(Main.GetConfig().room_alpha);
+						BsenModel.SetActive(true);
+
 					}
 					else {
-						BsenModelShader.ChangeToOriginColors(0.0f);
+						//BsenModelShader.ChangeToOriginColors(0.0f);
+						BsenModel.SetActive(false);
 					}
 				}
 			}
