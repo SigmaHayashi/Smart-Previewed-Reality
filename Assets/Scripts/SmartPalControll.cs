@@ -219,7 +219,7 @@ public class SmartPalControll : MonoBehaviour {
 		KeyValuePair<bool, string> request = RosSocketClient.GetServiceRequestMessage(service_name); // ROSからのリクエスト
 		if (request.Key) {
 			Debug.Log("Request : " + request.Value);
-			Main.MyConsole_Add("Request : " + request.Value);
+			//Main.MyConsole_Add("Request : " + request.Value);
 			Sp5TaskManager(request.Value);
 			pr_flag = true;
 		}
@@ -227,7 +227,7 @@ public class SmartPalControll : MonoBehaviour {
 		KeyValuePair<bool, string> request_arm = RosSocketClient.GetServiceRequestMessage(service_name_arm); // ROSからのリクエスト
 		if (request_arm.Key) {
 			Debug.Log("Request : " + request_arm.Value);
-			Main.MyConsole_Add("Request : " + request_arm.Value);
+			//Main.MyConsole_Add("Request : " + request_arm.Value);
 			Sp5TaskManager(request_arm.Value);
 			pr_flag = true;
 		}
@@ -235,7 +235,7 @@ public class SmartPalControll : MonoBehaviour {
 		KeyValuePair<bool, string> response = RosSocketClient.GetServiceResponseMessage(service_name_voronoi); // ServiceCallの結果
 		if (response.Key) {
 			Debug.Log("Response : " + response.Value);
-			Main.MyConsole_Add("Response : " + response.Value);
+			//Main.MyConsole_Add("Response : " + response.Value);
 			Sp5VoronoiPathServiceClient(response.Value);
 		}
 
@@ -422,7 +422,9 @@ public class SmartPalControll : MonoBehaviour {
 			Debug.Log("subGoal[" + path_counter + "] : " + SubGoal[0] + ", " + SubGoal[1] + ", " + SubGoal[2]);
 			Main.MyConsole_Add("subGoal[" + path_counter + "] : " + SubGoal[0] + ", " + SubGoal[1] + ", " + SubGoal[2]);
 
-			Instantiate(SubGoalObject_prefab, new Vector3(SubGoal[0], 0.0f, SubGoal[1]), Quaternion.Euler(new Vector3(0.0f, SubGoal[2] * Mathf.Rad2Deg, 0.0f)));
+			GameObject SubGoalObject = Instantiate(SubGoalObject_prefab);
+			SubGoalObject.transform.position = Ros2UnityPosition(new Vector3(SubGoal[0], SubGoal[1], 0.0f));
+			SubGoalObject.transform.eulerAngles = new Vector3(0.0f, SubGoal[2] * Mathf.Rad2Deg, 0.0f);
 
 			float dis_x = Mathf.Abs(SubGoal[0] - current[0]);
 			float dis_y = Mathf.Abs(SubGoal[1] - current[1]);
