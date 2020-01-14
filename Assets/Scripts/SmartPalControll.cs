@@ -135,6 +135,9 @@ public class SmartPalControll : MonoBehaviour {
 	private SafetyLevel safety_level = SafetyLevel.NONE;
 	private List<GameObject> SmartPalPartsList = new List<GameObject>();
 
+	// 警告UI
+	private GameObject SubGoalObject_prefab;
+
 
 	/*****************************************************************
 	 * Start()
@@ -150,7 +153,8 @@ public class SmartPalControll : MonoBehaviour {
 		DBAccessManager = GameObject.Find("Ros Socket Client").GetComponent<DBAccessManager>();
 
 		SmartPalShader = transform.gameObject.GetComponent<ShaderChange>();
-		GetAllChildren(transform.gameObject, ref SmartPalPartsList);
+		//GetAllChildren(transform.gameObject, ref SmartPalPartsList);
+		SmartPalPartsList = GetAllChildren(transform.gameObject);
 
 		for(int i = 0; i < 7; i++) {
 			LeftArm_joints[i] = GameObject.Find(string.Format("l_arm_j{0}_link", i + 1));
@@ -169,6 +173,8 @@ public class SmartPalControll : MonoBehaviour {
 
 		Chipstar = GameObject.Find("chipstar_red");
 		ChipstarShader = Chipstar.GetComponent<ShaderChange>();
+
+		SubGoalObject_prefab = (GameObject)Resources.Load("SubGoal Object");
 	}
 	
 
@@ -213,6 +219,7 @@ public class SmartPalControll : MonoBehaviour {
 		KeyValuePair<bool, string> request = RosSocketClient.GetServiceRequestMessage(service_name); // ROSからのリクエスト
 		if (request.Key) {
 			Debug.Log("Request : " + request.Value);
+			Main.MyConsole_Add("Request : " + request.Value);
 			Sp5TaskManager(request.Value);
 			pr_flag = true;
 		}
@@ -220,6 +227,7 @@ public class SmartPalControll : MonoBehaviour {
 		KeyValuePair<bool, string> request_arm = RosSocketClient.GetServiceRequestMessage(service_name_arm); // ROSからのリクエスト
 		if (request_arm.Key) {
 			Debug.Log("Request : " + request_arm.Value);
+			Main.MyConsole_Add("Request : " + request_arm.Value);
 			Sp5TaskManager(request_arm.Value);
 			pr_flag = true;
 		}
@@ -227,6 +235,7 @@ public class SmartPalControll : MonoBehaviour {
 		KeyValuePair<bool, string> response = RosSocketClient.GetServiceResponseMessage(service_name_voronoi); // ServiceCallの結果
 		if (response.Key) {
 			Debug.Log("Response : " + response.Value);
+			Main.MyConsole_Add("Response : " + response.Value);
 			Sp5VoronoiPathServiceClient(response.Value);
 		}
 
@@ -279,8 +288,10 @@ public class SmartPalControll : MonoBehaviour {
 			SubGoals = pos_array.VoronoiPath;
 
 			Debug.Log("SubGoals Length : " + SubGoals.Length);
-			foreach(RpsPosition subgoal in SubGoals) {
+			Main.MyConsole_Add("SubGoals Length : " + SubGoals.Length);
+			foreach (RpsPosition subgoal in SubGoals) {
 				Debug.Log(subgoal.x.ToString("f4") + ", " + subgoal.y.ToString("f4"));
+				Main.MyConsole_Add(subgoal.x.ToString("f4") + ", " + subgoal.y.ToString("f4"));
 			}
 
 			if (SubGoals.Length == 1) {
@@ -325,6 +336,7 @@ public class SmartPalControll : MonoBehaviour {
 					i++;
 				}
 				Debug.LogError("!--- Illegal Values are sent (Arm navigation) ---!");
+				Main.MyConsole_Add("!--- Illegal Values are sent (Arm navigation) ---!");
 			}
 		}
 		else {
@@ -409,6 +421,8 @@ public class SmartPalControll : MonoBehaviour {
 
 			Debug.Log("subGoal[" + path_counter + "] : " + SubGoal[0] + ", " + SubGoal[1] + ", " + SubGoal[2]);
 			Main.MyConsole_Add("subGoal[" + path_counter + "] : " + SubGoal[0] + ", " + SubGoal[1] + ", " + SubGoal[2]);
+
+			Instantiate(SubGoalObject_prefab, new Vector3(SubGoal[0], 0.0f, SubGoal[1]), Quaternion.Euler(new Vector3(0.0f, SubGoal[2] * Mathf.Rad2Deg, 0.0f)));
 
 			float dis_x = Mathf.Abs(SubGoal[0] - current[0]);
 			float dis_y = Mathf.Abs(SubGoal[1] - current[1]);
@@ -790,6 +804,7 @@ public class SmartPalControll : MonoBehaviour {
 				Chipstar.transform.position = chipstar_pos;
 
 				Debug.Log("ChipStar pos : " + chipstar_pos);
+				Main.MyConsole_Add("ChipStar pos : " + chipstar_pos);
 
 				ChipstarShader.ChangeToOriginColors(Main.GetConfig().robot_alpha);
 
@@ -827,6 +842,7 @@ public class SmartPalControll : MonoBehaviour {
 	/*****************************************************************
 	 * すべての子オブジェクトを取得
 	 *****************************************************************/
+	/*
 	private void GetAllChildren(GameObject parent, ref List<GameObject> childrens) {
 		Transform children = parent.GetComponentInChildren<Transform>();
 		if (children.childCount == 0) {
@@ -836,6 +852,19 @@ public class SmartPalControll : MonoBehaviour {
 			childrens.Add(ob.gameObject);
 			GetAllChildren(ob.gameObject, ref childrens);
 		}
+	}
+	*/
+	private List<GameObject> GetAllChildren(GameObject parent) {
+		List<GameObject> children_list = new List<GameObject>();
+		Transform children = parent.GetComponentInChildren<Transform>();
+		if (children.childCount == 0) {
+			return new List<GameObject>();
+		}
+		foreach (Transform children_children in children) {
+			children_list.Add(children_children.gameObject);
+			GetAllChildren(children_children.gameObject);
+		}
+		return children_list;
 	}
 
 	/*****************************************************************
