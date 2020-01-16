@@ -24,8 +24,8 @@ public class MainScript : MonoBehaviour {
 	private bool capture_mode = false;
 
 	//Startの処理がすべて終わったかどうか
-	private bool finish_start_all = false;
-	public bool FinishStartAll() { return finish_start_all; }
+	private bool is_finish_start_all = false;
+	public bool IsFinishStartAll() { return is_finish_start_all; }
 
 	//コンフィグデータ
 	private SmartPreviewedRealityConfig config_data;
@@ -125,18 +125,18 @@ public class MainScript : MonoBehaviour {
 			}
 		}
 
-		if (!finish_read_config && SettingsCanvas.FinishStart()) {
+		if (!finish_read_config && SettingsCanvas.IsFinishStart()) {
 			config_data = SettingsCanvas.GetConfig();
 			screen_not_sleep = config_data.screen_not_sleep;
 			finish_read_config = true;
 		}
 
-		if(!finish_start_all && 
-			MainCanvas.FinishStart() &&
-			CalibrationCanvas.FinishStart() &&
-			MyConsoleCanvas.FinishStart() &&
-			InformationCanvas.FinishStart() &&
-			SettingsCanvas.FinishStart()) {
+		if(!is_finish_start_all && 
+			MainCanvas.IsFinishStart() &&
+			CalibrationCanvas.IsFinishStart() &&
+			MyConsoleCanvas.IsFinishStart() &&
+			InformationCanvas.IsFinishStart() &&
+			SettingsCanvas.IsFinishStart()) {
 			foreach(KeyValuePair<CanvasName, GameObject> canvas in CanvasDictionary) {
 				if (canvas.Key != CanvasName.MainCanvas) {
 					canvas.Value.SetActive(false);
@@ -144,7 +144,7 @@ public class MainScript : MonoBehaviour {
 			}
 			active_canvas = CanvasName.MainCanvas;
 
-			finish_start_all = true;
+			is_finish_start_all = true;
 		}
 	}
 

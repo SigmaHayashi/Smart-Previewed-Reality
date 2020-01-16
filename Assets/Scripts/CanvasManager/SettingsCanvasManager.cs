@@ -43,8 +43,8 @@ public class SettingsCanvasManager : MonoBehaviour {
 	private InputField RobotAlphaInput;
 
 	//Startが終わったかどうか
-	private bool finish_start = false;
-	public bool FinishStart() { return finish_start; }
+	private bool is_finish_start = false;
+	public bool IsFinishStart() { return is_finish_start; }
 
 
 	// Start is called before the first frame update
@@ -117,7 +117,7 @@ public class SettingsCanvasManager : MonoBehaviour {
 		BackToMainButton.gameObject.SetActive(true);
 		RestartAppButton.gameObject.SetActive(false);
 
-		finish_start = true;
+		is_finish_start = true;
 	}
 
 

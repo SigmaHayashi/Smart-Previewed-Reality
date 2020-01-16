@@ -18,8 +18,8 @@ public class MainCanvasManager : MonoBehaviour {
 	private Text InfoText;
 
 	//Startが終わったかどうか
-	private bool finish_start = false;
-	public bool FinishStart() { return finish_start; }
+	private bool is_finish_start = false;
+	public bool IsFinishStart() { return is_finish_start; }
 
 	// Start is called before the first frame update
 	void Start() {
@@ -39,7 +39,7 @@ public class MainCanvasManager : MonoBehaviour {
 		//UIを取得
 		InfoText = GameObject.Find("Main System/Main Canvas/Horizontal_0/Info Text").GetComponent<Text>();
 
-		finish_start = true;
+		is_finish_start = true;
 	}
 
 	// Update is called once per frame

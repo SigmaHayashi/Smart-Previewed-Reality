@@ -37,8 +37,8 @@ public class CalibrationCanvasManager : MonoBehaviour {
 	public bool IsChengedDisplayRoomToggle() { return changed_display_room_toggle; }
 
 	//Startが終わったかどうか
-	private bool finish_start = false;
-	public bool FinishStart() { return finish_start; }
+	private bool is_finish_start = false;
+	public bool IsFinishStart() { return is_finish_start; }
 
 
 	// Start is called before the first frame update
@@ -75,7 +75,7 @@ public class CalibrationCanvasManager : MonoBehaviour {
 		DisplayRoomToggle = GameObject.Find("Main System/Calibration Canvas/Horizontal_0/Vertical_0/Horizontal_0/Display Room Toggle").GetComponent<Toggle>();
 		DisplayRoomToggle.onValueChanged.AddListener((x) => { changed_display_room_toggle = true; });
 
-		finish_start = true;
+		is_finish_start = true;
 	}
 
 	//ボタンに機能を持たせる

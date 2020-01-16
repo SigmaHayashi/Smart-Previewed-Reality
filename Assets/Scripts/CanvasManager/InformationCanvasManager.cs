@@ -16,8 +16,8 @@ public class InformationCanvasManager : MonoBehaviour {
 	private Text ViconSmartPalInfoText;
 
 	//Startが終わったかどうか
-	private bool finish_start = false;
-	public bool FinishStart() { return finish_start; }
+	private bool is_finish_start = false;
+	public bool IsFinishStart() { return is_finish_start; }
 
 
 	// Start is called before the first frame update
@@ -33,7 +33,7 @@ public class InformationCanvasManager : MonoBehaviour {
 		ViconIrvsMarkerInfoText = GameObject.Find("Main System/Information Canvas/Horizontal_0/Info Area/Horizontal_0/Vertical_0/Scroll View/Scroll Contents/VICON Info/IRVS Marker Info Text").GetComponent<Text>();
 		ViconSmartPalInfoText = GameObject.Find("Main System/Information Canvas/Horizontal_0/Info Area/Horizontal_0/Vertical_0/Scroll View/Scroll Contents/VICON Info/SmartPal Info Text").GetComponent<Text>();
 
-		finish_start = true;
+		is_finish_start = true;
 	}
 
 

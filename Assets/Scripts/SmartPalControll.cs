@@ -136,7 +136,9 @@ public class SmartPalControll : MonoBehaviour {
 	private List<GameObject> SmartPalPartsList = new List<GameObject>();
 
 	// 警告UI
-	private GameObject SubGoalObject_prefab;
+	//private GameObject SubGoalObject_prefab;
+	private GameObject SubGoalObject;
+	private AlertCanvasManager AlertManager;
 
 
 	/*****************************************************************
@@ -174,7 +176,10 @@ public class SmartPalControll : MonoBehaviour {
 		Chipstar = GameObject.Find("chipstar_red");
 		ChipstarShader = Chipstar.GetComponent<ShaderChange>();
 
-		SubGoalObject_prefab = (GameObject)Resources.Load("SubGoal Object");
+		//SubGoalObject_prefab = (GameObject)Resources.Load("SubGoal Object");
+		SubGoalObject = GameObject.Find("SubGoal Object");
+		SubGoalObject.SetActive(false);
+		AlertManager = GameObject.Find("Main System/Alert Canvas").GetComponent<AlertCanvasManager>();
 	}
 	
 
@@ -219,7 +224,7 @@ public class SmartPalControll : MonoBehaviour {
 		KeyValuePair<bool, string> request = RosSocketClient.GetServiceRequestMessage(service_name); // ROSからのリクエスト
 		if (request.Key) {
 			Debug.Log("Request : " + request.Value);
-			Main.MyConsole_Add("Request : " + request.Value);
+			//Main.MyConsole_Add("Request : " + request.Value);
 			Sp5TaskManager(request.Value);
 			pr_flag = true;
 		}
@@ -227,7 +232,7 @@ public class SmartPalControll : MonoBehaviour {
 		KeyValuePair<bool, string> request_arm = RosSocketClient.GetServiceRequestMessage(service_name_arm); // ROSからのリクエスト
 		if (request_arm.Key) {
 			Debug.Log("Request : " + request_arm.Value);
-			Main.MyConsole_Add("Request : " + request_arm.Value);
+			//Main.MyConsole_Add("Request : " + request_arm.Value);
 			Sp5TaskManager(request_arm.Value);
 			pr_flag = true;
 		}
@@ -235,7 +240,7 @@ public class SmartPalControll : MonoBehaviour {
 		KeyValuePair<bool, string> response = RosSocketClient.GetServiceResponseMessage(service_name_voronoi); // ServiceCallの結果
 		if (response.Key) {
 			Debug.Log("Response : " + response.Value);
-			Main.MyConsole_Add("Response : " + response.Value);
+			//Main.MyConsole_Add("Response : " + response.Value);
 			Sp5VoronoiPathServiceClient(response.Value);
 		}
 
@@ -264,6 +269,81 @@ public class SmartPalControll : MonoBehaviour {
 				SmartPalShader.ChangeToOriginColors(Main.GetConfig().robot_alpha);
 				safety_level = SafetyLevel.NOT_MOVE;
 			}
+		}
+
+		// 警告UIの表示
+		/*
+		// SubGoalが2m以内
+		bool flash_ok_1 = false;
+		if (CalcDistance(Camera.main.transform.gameObject, SubGoalObject) <= 2.0f) {
+			flash_ok_1 = true;
+		}
+		// 今のロボットの位置よりSubGoalが近い
+		bool flash_ok_2 = false;
+		if (CalcDistance(Camera.main.transform.gameObject, SubGoalObject) - CalcDistance(Camera.main.transform.gameObject, transform.gameObject) < 0) {
+			flash_ok_2 = true;
+		}
+		*/
+		if (SubGoalObject.activeInHierarchy) {
+			// SmartPalとSubGoalを結ぶ直線の式(z=ax+b)を計算
+			float to_subgoal_line_a = (SubGoalObject.transform.position.z - transform.position.z) / (SubGoalObject.transform.position.x - transform.position.x);
+			float to_subgoal_line_b = to_subgoal_line_a * transform.position.x * -1 + transform.position.z;
+			// 直線と直行してカメラを通る直線の式(z=ax+b)を計算 // a = -1/a
+			float camera_to_line_line_b = Camera.main.transform.position.x / to_subgoal_line_a + Camera.main.transform.position.z;
+			// カメラからSmartPalとSubGoalを結ぶ直線の一番近いところ
+			Vector3 near_point = new Vector3();
+			near_point.x = (camera_to_line_line_b - to_subgoal_line_b) / (to_subgoal_line_a + 1 / to_subgoal_line_a);
+			near_point.z = to_subgoal_line_a * near_point.x + to_subgoal_line_b;
+			if (transform.position.x > SubGoalObject.transform.position.x) {
+				if (near_point.x > transform.position.x) {
+					near_point = transform.position;
+					near_point.y = 0.0f;
+				}
+				else if (near_point.x < SubGoalObject.transform.position.x) {
+					near_point = SubGoalObject.transform.position;
+					near_point.y = 0.0f;
+				}
+			}
+			else {
+				if (near_point.x < transform.position.x) {
+					near_point = transform.position;
+					near_point.y = 0.0f;
+				}
+				else if (near_point.x > SubGoalObject.transform.position.x) {
+					near_point = SubGoalObject.transform.position;
+					near_point.y = 0.0f;
+				}
+			}
+			GameObject.Find("Cube").transform.position = near_point;
+			// 距離を計算
+			float distance_camera_to_near_point = CalcDistance(Camera.main.transform.position, near_point);
+			float distance_camera_to_sp5 = CalcDistance(Camera.main.transform.gameObject, transform.gameObject);
+
+			if (distance_camera_to_near_point < 2.0f && distance_camera_to_near_point < distance_camera_to_sp5) {
+				//if (SubGoalObject.activeInHierarchy && flash_ok_1 && flash_ok_2) {
+				float euler_to_subgoal = Mathf.Atan2((transform.position.x - Camera.main.transform.position.x) * -1, transform.position.z - Camera.main.transform.position.z) * Mathf.Rad2Deg;
+				euler_to_subgoal = Mathf.DeltaAngle(Camera.main.transform.eulerAngles.y * -1, euler_to_subgoal);
+				Debug.Log("Euler to SubGoal : " + euler_to_subgoal);
+
+				if (euler_to_subgoal > -45 && euler_to_subgoal <= 45) {
+					AlertManager.FlashComeFromFront();
+				}
+				else if (euler_to_subgoal > 45 && euler_to_subgoal <= 135) {
+					AlertManager.FlashComeFromLeft();
+				}
+				else if (euler_to_subgoal <= -45 && euler_to_subgoal > -135) {
+					AlertManager.FlashComeFromRight();
+				}
+				else {
+					AlertManager.FlashComeFromBack();
+				}
+			}
+			else {
+				AlertManager.StopFlash();
+			}
+		}
+		else {
+			AlertManager.StopFlash();
 		}
 	}
 
@@ -326,6 +406,7 @@ public class SmartPalControll : MonoBehaviour {
 					sub_goals_arm[i] = sub_goals_arm[i] * Mathf.Rad2Deg;
 					sub_goals_arm[i] = Mathf.DeltaAngle(0, sub_goals_arm[i]);
 					LeftArm_target_quart[i] = LeftArm_init_quart[i] * Quaternion.Euler(0.0f, sub_goals_arm[i], 0.0f);
+					Main.MyConsole_Add("Left Arm Joint[" + i + "] target : " + sub_goals_arm[i]);
 				}
 			}
 			else {
@@ -385,6 +466,7 @@ public class SmartPalControll : MonoBehaviour {
 				//if (Main.WhichCanvasActive() == CanvasName.MyConsoleCanvas) { MyConsoleCanvas.Add("Sp5 Arrived the Goal"); }
 				//else { Main.MyConsole_UpdateBuffer_Message("Sp5 Arrived the Goal"); }
 				Main.MyConsole_Add("Sp5 Arrived the Goal");
+				SubGoalObject.SetActive(false);
 				return;
 			}
 			else { // 経路をアップデートするためにVoronoi Path Plannerを呼びだす
@@ -422,7 +504,10 @@ public class SmartPalControll : MonoBehaviour {
 			Debug.Log("subGoal[" + path_counter + "] : " + SubGoal[0] + ", " + SubGoal[1] + ", " + SubGoal[2]);
 			Main.MyConsole_Add("subGoal[" + path_counter + "] : " + SubGoal[0] + ", " + SubGoal[1] + ", " + SubGoal[2]);
 
-			Instantiate(SubGoalObject_prefab, new Vector3(SubGoal[0], 0.0f, SubGoal[1]), Quaternion.Euler(new Vector3(0.0f, SubGoal[2] * Mathf.Rad2Deg, 0.0f)));
+			//GameObject SubGoalObject = Instantiate(SubGoalObject_prefab);
+			SubGoalObject.SetActive(true);
+			SubGoalObject.transform.position = Ros2UnityPosition(new Vector3(SubGoal[0], SubGoal[1], 0.0f));
+			SubGoalObject.transform.eulerAngles = new Vector3(0.0f, SubGoal[2] * Mathf.Rad2Deg, 0.0f);
 
 			float dis_x = Mathf.Abs(SubGoal[0] - current[0]);
 			float dis_y = Mathf.Abs(SubGoal[1] - current[1]);
@@ -874,6 +959,10 @@ public class SmartPalControll : MonoBehaviour {
 		Vector3 obj_a_pos = obj_a.transform.position;
 		Vector3 obj_b_pos = obj_b.transform.position;
 		return Mathf.Sqrt(Mathf.Pow((obj_a_pos.x - obj_b_pos.x), 2) + Mathf.Pow((obj_a_pos.z - obj_b_pos.z), 2));
+	}
+
+	private float CalcDistance(Vector3 pos_a, Vector3 pos_b) {
+		return Mathf.Sqrt(Mathf.Pow((pos_a.x - pos_b.x), 2) + Mathf.Pow((pos_a.z - pos_b.z), 2));
 	}
 
 	/*****************************************************************

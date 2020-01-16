@@ -18,8 +18,8 @@ public class MyConsoleCanvasManager : MonoBehaviour {
 	private RectTransform ScrollViewRect;
 
 	//Startが終わったかどうか
-	private bool finish_start = false;
-	public bool FinishStart() { return finish_start; }
+	private bool is_finish_start = false;
+	public bool IsFinishStart() { return is_finish_start; }
 
 	//UI
 	private Button DeleteButton;
@@ -51,7 +51,7 @@ public class MyConsoleCanvasManager : MonoBehaviour {
 		PauseToggle.isOn = false;
 		PauseToggle.onValueChanged.AddListener(Pause);
 
-		finish_start = true;
+		is_finish_start = true;
 	}
 
 
