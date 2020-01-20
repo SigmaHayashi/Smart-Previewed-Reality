@@ -57,8 +57,32 @@ public class MainScript : MonoBehaviour {
 	private bool myconsole_delete_buffer = false;
 
 	//Information Canvasのバッファ
-	private string information_vicon_irvsmarker_text_buffer;
-	private string information_vicon_smartpal_text_buffer;
+	//private string information_vicon_irvsmarker_text_buffer;
+	private bool	information_vicon_irvsmarker_update = false;
+	private Vector3	information_vicon_irvsmarker_pos_buffer;
+	private float	information_vicon_irvsmarker_yaw_buffer;
+	//private string information_vicon_smartpal_text_buffer;
+	private bool	information_vicon_smartpal_update = false;
+	private Vector3	information_vicon_smartpal_pos_buffer;
+	private float	information_vicon_smartpal_yaw_buffer;
+	private bool	information_database_chipstar_update = false;
+	private Vector3	information_database_chipstar_pos_buffer;
+	private Vector3	information_database_chipstar_eul_buffer;
+	private bool	information_virtual_camera_update = false;
+	private Vector3	information_virtual_camera_pos_buffer;
+	private Vector3 information_virtual_camera_eul_buffer;
+	private bool	information_virtual_smartpal_update = false;
+	private Vector3 information_virtual_smartpal_pos_buffer;
+	private float	information_virtual_smartpal_yaw_buffer;
+	private bool	information_virtual_chipstar_update = false;
+	private Vector3 information_virtual_chipstar_pos_buffer;
+	private Vector3 information_virtual_chipstar_eul_buffer;
+	private bool	information_subgoal_move_update = false;
+	private float[]	information_subgoal_move_buffer;
+	private bool	information_subgoal_arm_update = false;
+	private float[] information_subgoal_arm_buffer;
+	private bool	information_subgoal_gripper_update = false;
+	private float	information_subgoal_gripper_buffer;
 
 
 	/**************************************************
@@ -317,13 +341,60 @@ public class MainScript : MonoBehaviour {
 		active_canvas = CanvasName.InformationCanvas;
 		CanvasDictionary[active_canvas].SetActive(true);
 
+		/*
 		if (information_vicon_irvsmarker_text_buffer != null) {
 			InformationCanvas.Change_Vicon_IrvsMarkerInfoText(information_vicon_irvsmarker_text_buffer);
 			information_vicon_irvsmarker_text_buffer = null;
 		}
+		*/
+		if(information_vicon_irvsmarker_update) {
+			InformationCanvas.Update_ViconIrvsMarkerInfoText(information_vicon_irvsmarker_pos_buffer, information_vicon_irvsmarker_yaw_buffer);
+			information_vicon_irvsmarker_update = false;
+		}
+		/*
 		if (information_vicon_smartpal_text_buffer != null) {
 			InformationCanvas.Change_Vicon_SmartPalInfoText(information_vicon_smartpal_text_buffer);
 			information_vicon_smartpal_text_buffer = null;
+		}
+		*/
+		if (information_vicon_smartpal_update) {
+			InformationCanvas.Update_ViconSmartPalInfoText(information_vicon_smartpal_pos_buffer, information_vicon_smartpal_yaw_buffer);
+			information_vicon_smartpal_update = false;
+		}
+
+		if (information_database_chipstar_update) {
+			InformationCanvas.Update_DatabaseChipstarInfoText(information_database_chipstar_pos_buffer, information_database_chipstar_eul_buffer);
+			information_database_chipstar_update = false;
+		}
+
+		if (information_virtual_camera_update) {
+			InformationCanvas.Update_VirtualCameraInfoText(information_virtual_camera_pos_buffer, information_virtual_camera_eul_buffer);
+			information_virtual_camera_update = false;
+		}
+
+		if (information_virtual_smartpal_update) {
+			InformationCanvas.Update_VirtualSmartPalInfoText(information_virtual_smartpal_pos_buffer, information_virtual_smartpal_yaw_buffer);
+			information_virtual_smartpal_update = false;
+		}
+
+		if (information_virtual_chipstar_update) {
+			InformationCanvas.Update_VirtualChipstarInfoText(information_virtual_chipstar_pos_buffer, information_virtual_chipstar_eul_buffer);
+			information_virtual_chipstar_update = false;
+		}
+
+		if (information_subgoal_move_update) {
+			InformationCanvas.Update_SubGoalMoveInfoText(information_subgoal_move_buffer);
+			information_subgoal_move_update = false;
+		}
+
+		if (information_subgoal_arm_update) {
+			InformationCanvas.Update_SubGoalArmInfoText(information_subgoal_arm_buffer);
+			information_subgoal_arm_update = false;
+		}
+
+		if (information_subgoal_gripper_update) {
+			InformationCanvas.Update_SubGoalGripperInfoText(information_subgoal_gripper_buffer);
+			information_subgoal_gripper_update = false;
 		}
 	}
 
@@ -342,21 +413,105 @@ public class MainScript : MonoBehaviour {
 	/**************************************************
 	 * Information CanvasのAPI
 	 **************************************************/
-	public void Information_Change_Vicon_IrvsMarkerInfoText(string message) {
+	//public void Information_Change_Vicon_IrvsMarkerInfoText(string message) {
+	public void Information_Update_ViconIrvsMarkerInfoText(Vector3 pos, float yaw) {
 		if (WhichCanvasActive() == CanvasName.InformationCanvas) {
-			InformationCanvas.Change_Vicon_IrvsMarkerInfoText(message);
+			//InformationCanvas.Change_Vicon_IrvsMarkerInfoText(message);
+			InformationCanvas.Update_ViconIrvsMarkerInfoText(pos, yaw);
 		}
 		else {
-			information_vicon_irvsmarker_text_buffer = message;
+			//information_vicon_irvsmarker_text_buffer = message;
+			information_vicon_irvsmarker_update = true;
+			information_vicon_irvsmarker_pos_buffer = pos;
+			information_vicon_irvsmarker_yaw_buffer = yaw;
 		}
 	}
 
-	public void Information_Change_Vicon_SmartPalInfoText(string message) {
+	//public void Information_Change_Vicon_SmartPalInfoText(string message) {
+	public void Information_Update_ViconSmartPalInfoText(Vector3 pos, float yaw) {
 		if (WhichCanvasActive() == CanvasName.InformationCanvas) {
-			InformationCanvas.Change_Vicon_SmartPalInfoText(message);
+			//InformationCanvas.Change_Vicon_SmartPalInfoText(message);
+			InformationCanvas.Update_ViconSmartPalInfoText(pos, yaw);
 		}
 		else {
-			information_vicon_smartpal_text_buffer = message;
+			//information_vicon_smartpal_text_buffer = message;
+			information_vicon_smartpal_update = true;
+			information_vicon_smartpal_pos_buffer = pos;
+			information_vicon_smartpal_yaw_buffer = yaw;
+		}
+	}
+
+	public void Information_Update_DatabaseChipstarInfoText(Vector3 pos, Vector3 eul) {
+		if(WhichCanvasActive() == CanvasName.InformationCanvas) {
+			InformationCanvas.Update_DatabaseChipstarInfoText(pos, eul);
+		}
+		else {
+			information_database_chipstar_update = true;
+			information_database_chipstar_pos_buffer = pos;
+			information_database_chipstar_eul_buffer = eul;
+		}
+	}
+
+	public void Information_Update_VirtualCameraInfoText(Vector3 pos, Vector3 eul) {
+		if (WhichCanvasActive() == CanvasName.InformationCanvas) {
+			InformationCanvas.Update_VirtualCameraInfoText(pos, eul);
+		}
+		else {
+			information_virtual_camera_update = true;
+			information_virtual_camera_pos_buffer = pos;
+			information_virtual_camera_eul_buffer = eul;
+		}
+	}
+
+	public void Information_Update_VirtualSmartPalinfoText(Vector3 pos, float yaw) {
+		if (WhichCanvasActive() == CanvasName.InformationCanvas) {
+			InformationCanvas.Update_VirtualSmartPalInfoText(pos, yaw);
+		}
+		else {
+			information_virtual_smartpal_update = true;
+			information_virtual_smartpal_pos_buffer = pos;
+			information_virtual_smartpal_yaw_buffer = yaw;
+		}
+	}
+
+	public void Information_Update_VirtualChipstarinfoText(Vector3 pos, Vector3 eul) {
+		if (WhichCanvasActive() == CanvasName.InformationCanvas) {
+			InformationCanvas.Update_VirtualChipstarInfoText(pos, eul);
+		}
+		else {
+			information_virtual_chipstar_update = true;
+			information_virtual_chipstar_pos_buffer = pos;
+			information_virtual_chipstar_eul_buffer = eul;
+		}
+	}
+
+	public void Information_Update_SubGoalMoveinfoText(float[] subgoal) {
+		if (WhichCanvasActive() == CanvasName.InformationCanvas) {
+			InformationCanvas.Update_SubGoalMoveInfoText(subgoal);
+		}
+		else {
+			information_subgoal_move_update = true;
+			information_subgoal_move_buffer = subgoal;
+		}
+	}
+
+	public void Information_Update_SubGoalArminfoText(float[] joints) {
+		if (WhichCanvasActive() == CanvasName.InformationCanvas) {
+			InformationCanvas.Update_SubGoalArmInfoText(joints);
+		}
+		else {
+			information_subgoal_arm_update = true;
+			information_subgoal_arm_buffer = joints;
+		}
+	}
+
+	public void Information_Update_SubGoalGripperinfoText(float target) {
+		if (WhichCanvasActive() == CanvasName.InformationCanvas) {
+			InformationCanvas.Update_SubGoalGripperInfoText(target);
+		}
+		else {
+			information_subgoal_gripper_update = true;
+			information_subgoal_gripper_buffer = target;
 		}
 	}
 

@@ -204,7 +204,8 @@ public class BsenCalibrationSystem : MonoBehaviour {
 
 						//if(Main.WhichCanvasActive() == CanvasName.InformationCanvas) { InformationCanvas.Change_Vicon_IrvsMarkerInfoText("IRVS Marker\n" + "Pos : " + marker_position.ToString("f2") + " Yaw : " + marker_euler.y.ToString("f2")); }
 						//else { Main.Information_UpdateBuffer_ViconIrvsMarkerText("IRVS Marker\n" + "Pos : " + marker_position.ToString("f2") + " Yaw : " + marker_euler.y.ToString("f2")); }
-						Main.Information_Change_Vicon_IrvsMarkerInfoText("IRVS Marker\n" + "Pos : " + marker_position.ToString("f2") + " Yaw : " + marker_euler.y.ToString("f2"));
+						//Main.Information_Change_Vicon_IrvsMarkerInfoText("IRVS Marker\n" + "Pos : " + marker_position.ToString("f2") + " Yaw : " + marker_euler.y.ToString("f2"));
+						Main.Information_Update_ViconIrvsMarkerInfoText(marker_position, marker_euler.y);
 
 						//位置と回転をモデル上のマーカーに適用
 						IrvsMarker = Instantiate(new GameObject());

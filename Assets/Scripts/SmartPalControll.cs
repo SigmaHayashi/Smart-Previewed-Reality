@@ -156,6 +156,13 @@ public class SmartPalControll : MonoBehaviour {
 		SmartPalShader = transform.gameObject.GetComponent<ShaderChange>();
 		//GetAllChildren(transform.gameObject, ref SmartPalPartsList);
 		SmartPalPartsList = GetAllChildren(transform.gameObject);
+		/*
+		int parts_index = 0;
+		foreach(GameObject parts in SmartPalPartsList) {
+			Debug.Log("Parts Name " + parts_index + " : " + parts.name);
+			parts_index++;
+		}
+		*/
 
 		for(int i = 0; i < 7; i++) {
 			LeftArm_joints[i] = GameObject.Find(string.Format("l_arm_j{0}_link", i + 1));
@@ -327,6 +334,11 @@ public class SmartPalControll : MonoBehaviour {
 		else {
 			AlertManager.StopFlash();
 		}
+
+		// Information Canvasの更新
+		Main.Information_Update_VirtualCameraInfoText(Camera.main.transform.position, Camera.main.transform.eulerAngles);
+		Main.Information_Update_VirtualSmartPalinfoText(transform.position, transform.eulerAngles.y);
+		Main.Information_Update_VirtualChipstarinfoText(Chipstar.transform.position, Chipstar.transform.eulerAngles);
 	}
 
 	/*
@@ -377,6 +389,9 @@ public class SmartPalControll : MonoBehaviour {
 				sub_goals_arm[0] = sub_goals_arm[0] * Mathf.Rad2Deg;
 				sub_goals_arm[0] = Mathf.DeltaAngle(0, sub_goals_arm[0]);
 				LeftArm_target_quart[7] = LeftArm_init_quart[7] * Quaternion.Euler(0.0f, sub_goals_arm[0], 0.0f);
+				Debug.Log("Sub Goal Gripper : " + sub_goals_arm[0].ToString("f2"));
+				Main.MyConsole_Add("Sub Goal Gripper : " + sub_goals_arm[0].ToString("f2"));
+				Main.Information_Update_SubGoalGripperinfoText((LeftArm_init_quart[7] * Quaternion.Euler(0.0f, sub_goals_arm[0], 0.0f)).eulerAngles.y);
 			}
 			else if (sub_goals_arm.Length == 7) { // MOVE_TRAJECTORY_ARM
 				mode = Mode.ARM;
@@ -384,17 +399,18 @@ public class SmartPalControll : MonoBehaviour {
 				sub_goals_arm[3] *= -1;
 				sub_goals_arm[5] *= -1;
 				sub_goals_arm[6] *= -1;
-				string left_arm_joint_target_message = "Left Arm Joint Target : (";
+				string left_arm_joint_target_message = "Sub Goal Arm : (";
 				for (int i = 0; i < 7; i++) {
 					sub_goals_arm[i] = sub_goals_arm[i] * Mathf.Rad2Deg;
 					sub_goals_arm[i] = Mathf.DeltaAngle(0, sub_goals_arm[i]);
 					LeftArm_target_quart[i] = LeftArm_init_quart[i] * Quaternion.Euler(0.0f, sub_goals_arm[i], 0.0f);
 					//Main.MyConsole_Add("Left Arm Joint[" + i + "] target : " + sub_goals_arm[i]);
-					left_arm_joint_target_message += sub_goals_arm[i].ToString() + ", ";
+					left_arm_joint_target_message += sub_goals_arm[i].ToString("f2") + ", ";
 				}
 				left_arm_joint_target_message = left_arm_joint_target_message.Substring(0, left_arm_joint_target_message.Length - 2);
 				left_arm_joint_target_message += ")";
 				Main.MyConsole_Add(left_arm_joint_target_message);
+				Main.Information_Update_SubGoalArminfoText(sub_goals_arm);
 			}
 			else {
 				int i = 0;
@@ -491,6 +507,7 @@ public class SmartPalControll : MonoBehaviour {
 
 			Debug.Log("subGoal[" + path_counter + "] : " + SubGoal[0] + ", " + SubGoal[1] + ", " + SubGoal[2]);
 			Main.MyConsole_Add("subGoal[" + path_counter + "] : " + SubGoal[0] + ", " + SubGoal[1] + ", " + SubGoal[2]);
+			Main.Information_Update_SubGoalMoveinfoText(SubGoal);
 			
 			moving = true;
 
@@ -786,7 +803,8 @@ public class SmartPalControll : MonoBehaviour {
 					Main.Information_UpdateBuffer_ViconSmartPalText("SmartPal\n" + "Pos : " + sp5_pos.ToString("f2") + " Yaw : " + sp5_euler.y.ToString("f2"));
 				}
 				*/
-				Main.Information_Change_Vicon_SmartPalInfoText("SmartPal\n" + "Pos : " + sp5_pos.ToString("f2") + " Yaw : " + sp5_euler.y.ToString("f2"));
+				//Main.Information_Change_Vicon_SmartPalInfoText("SmartPal\n" + "Pos : " + sp5_pos.ToString("f2") + " Yaw : " + sp5_euler.y.ToString("f2"));
+				Main.Information_Update_ViconSmartPalInfoText(sp5_pos, sp5_euler.y);
 
 				finish_init_pos = true;
 			}
@@ -870,11 +888,14 @@ public class SmartPalControll : MonoBehaviour {
 				DBValue response_value = DBAccessManager.GetResponceValue();
 				DBAccessManager.FinishAccess();
 				Vector3 chipstar_pos = new Vector3((float)response_value.tmsdb[0].x, (float)response_value.tmsdb[0].y, (float)response_value.tmsdb[0].z);
+				Vector3 chipstar_eul = new Vector3((float)response_value.tmsdb[0].rr * Mathf.Rad2Deg, (float)response_value.tmsdb[0].rp * Mathf.Rad2Deg, (float)response_value.tmsdb[0].ry * Mathf.Rad2Deg);
 				chipstar_pos = Ros2UnityPosition(chipstar_pos);
+				chipstar_eul = Ros2UnityRotation(chipstar_eul);
 				Chipstar.transform.position = chipstar_pos;
 
 				Debug.Log("ChipStar pos : " + chipstar_pos);
 				Main.MyConsole_Add("ChipStar pos : " + chipstar_pos);
+				Main.Information_Update_DatabaseChipstarInfoText(chipstar_pos, chipstar_eul);
 
 				ChipstarShader.ChangeToOriginColors(Main.GetConfig().robot_alpha);
 
@@ -932,7 +953,7 @@ public class SmartPalControll : MonoBehaviour {
 		}
 		foreach (Transform children_children in children) {
 			children_list.Add(children_children.gameObject);
-			GetAllChildren(children_children.gameObject);
+			children_list.AddRange(GetAllChildren(children_children.gameObject));
 		}
 		return children_list;
 	}
