@@ -66,6 +66,9 @@ public class TmsDB {
 	*/
 	public TmsDB(TmsDBSerchMode mode, int arg1 = 0, int arg2 = 0) {
 		switch (mode) {
+			case TmsDBSerchMode.ID:
+				this.id = arg1;
+				break;
 			case TmsDBSerchMode.ID_SENSOR:
 				this.id = arg1;
 				this.sensor = arg2;
@@ -79,6 +82,7 @@ public class TmsDB {
 }
 
 public enum TmsDBSerchMode {
+	ID,
 	ID_SENSOR,
 	PLACE
 }
@@ -131,6 +135,7 @@ public class DBAccessManager : MonoBehaviour {
 	private bool wait_vicon_irvs_marker = false;
 	private bool wait_vicon_smartpal = false;
 	private bool wait_chipstar = false;
+	private bool wait_spr_user = false;
 
 	//private ServiceResponseDB responce;
 
@@ -173,6 +178,11 @@ public class DBAccessManager : MonoBehaviour {
 
 				if (wait_chipstar) {
 					WaitResponce(1.0f);
+				}
+
+				if (wait_spr_user)
+				{
+					WaitResponce(0.5f);
 				}
 			}
 		}
@@ -335,4 +345,37 @@ public class DBAccessManager : MonoBehaviour {
 	}
 
 	public bool CheckWaitChipstar() { return wait_chipstar; }
+	
+	/**************************************************
+	 * Read SPR User
+	 **************************************************/
+	public IEnumerator ReadSPRUser() {
+		wait_anything = access_db = wait_spr_user = true;
+		time_access = 0.0f;
+
+		/*
+		ServiceRequest.tmsdb = new TmsDB(TmsDBSerchMode.ID_SENSOR, 2003, 3001);
+		ServiceCallerDB(ServiceRequest);
+		*/
+		TmsDBArgs args = new TmsDBArgs()
+		{
+			tmsdb = new TmsDB(TmsDBSerchMode.ID, 1005)
+		};
+		RosSocketClient.ServiceCaller(service_name, args);
+
+		while (access_db)
+		{
+			yield return null;
+		}
+
+		while (success_access || abort_access)
+		{
+			yield return null;
+		}
+
+		wait_anything = wait_spr_user = false;
+	}
+
+	public bool CheckWaitSPRUser() { return wait_spr_user; }
+
 }

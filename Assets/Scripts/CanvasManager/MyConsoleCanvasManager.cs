@@ -17,6 +17,8 @@ public class MyConsoleCanvasManager : MonoBehaviour {
 	private GameObject ContentsParent;
 	private RectTransform ScrollViewRect;
 
+	private List<GameObject> TextList = new List<GameObject>();
+
 	//Startが終わったかどうか
 	private bool is_finish_start = false;
 	public bool IsFinishStart() { return is_finish_start; }
@@ -75,6 +77,12 @@ public class MyConsoleCanvasManager : MonoBehaviour {
 			NewObject.transform.SetParent(ContentsParent.transform, false);
 			NewObject.transform.localScale = new Vector3(1, 1, 1);
 			NewObject.GetComponent<Text>().text = message.ToString();
+
+			TextList.Add(NewObject);
+			if(TextList.Count > 1000) {
+				Destroy(TextList[0]);
+				TextList.RemoveAt(0);
+			}
 		}
 		else {
 			MessageList.Add(message);
