@@ -298,12 +298,12 @@ public class BsenCalibrationSystem : MonoBehaviour {
 				image_eul.z = 0.0f;
 
 				//デバイスの位置・回転を取得
-				Vector3 device_pos = ARCoreDevice.transform.position;
-				Vector3 device_eul = ARCoreDevice.transform.eulerAngles;
+				//Vector3 device_pos = ARCoreDevice.transform.position;
+				//Vector3 device_eul = ARCoreDevice.transform.eulerAngles;
 
 				//カメラの位置・回転を取得
-				Vector3 camera_pos = Camera.main.transform.position;
-				Vector3 camera_eul = Camera.main.transform.eulerAngles;
+				//Vector3 camera_pos = Camera.main.transform.position;
+				//Vector3 camera_eul = Camera.main.transform.eulerAngles;
 
 				//座標計算用の仮のオブジェクトをそれぞれ作成
 				GameObject image_object = new GameObject();
@@ -311,15 +311,17 @@ public class BsenCalibrationSystem : MonoBehaviour {
 				image_object.transform.eulerAngles = image_eul;
 
 				GameObject device_object = new GameObject();
-				device_object.transform.position = device_pos;
-				device_object.transform.eulerAngles = device_eul;
+				//device_object.transform.position = device_pos;
+				//device_object.transform.eulerAngles = device_eul;
+				device_object.transform.position = ARCoreDevice.transform.position;
+				device_object.transform.eulerAngles = ARCoreDevice.transform.eulerAngles;
 
-				GameObject camera_object = new GameObject();
-				camera_object.transform.position = camera_pos;
-				camera_object.transform.eulerAngles = camera_eul;
+				//GameObject camera_object = new GameObject();
+				//camera_object.transform.position = camera_pos;
+				//camera_object.transform.eulerAngles = camera_eul;
 
 				//親子関係を，画像＞デバイス＞カメラにする
-				camera_object.transform.SetParent(device_object.transform, true);
+				//camera_object.transform.SetParent(device_object.transform, true);
 				device_object.transform.SetParent(image_object.transform, true);
 
 				//仮の画像オブジェクトをあるべき位置・回転に変更
@@ -332,7 +334,7 @@ public class BsenCalibrationSystem : MonoBehaviour {
 
 				Destroy(image_object);
 				Destroy(device_object);
-				Destroy(camera_object);
+				//Destroy(camera_object);
 			}
 		}
 	}
