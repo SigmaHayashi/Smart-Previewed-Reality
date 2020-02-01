@@ -24,11 +24,10 @@ public class ShaderChange : MonoBehaviour {
 	// Start is called before the first frame update
 	void Start() {
 		renderers = GetComponentsInChildren<Renderer>();
+		//ChangeShader(Shader.Find("Custom/Transparent"));
 		//ChangeShader(Shader.Find("Custom/SemiTransparent"));
 		ChangeShader(Shader.Find("Custom/ARTransparent"));
-		//SaveColors();
 		SaveOriginColors();
-		//ChangeColors();
 		ChangeToOriginColors(0.0f);
 	}
 
