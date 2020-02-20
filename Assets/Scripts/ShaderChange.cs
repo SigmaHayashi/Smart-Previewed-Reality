@@ -26,9 +26,7 @@ public class ShaderChange : MonoBehaviour {
 		renderers = GetComponentsInChildren<Renderer>();
 		//ChangeShader(Shader.Find("Custom/SemiTransparent"));
 		ChangeShader(Shader.Find("Custom/ARTransparent"));
-		//SaveColors();
 		SaveOriginColors();
-		//ChangeColors();
 		ChangeToOriginColors(0.0f);
 	}
 
