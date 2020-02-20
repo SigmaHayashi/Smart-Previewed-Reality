@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
+using TMPro;
 
 public class RosTime {
 	public int secs = 0;
@@ -38,6 +39,10 @@ public class Experiment : MonoBehaviour {
 	private bool get_self_position = false;
 	private Toggle SaveToggle;
 	private bool saving = false;
+	private Toggle DummyServiceCallToggle;
+	private bool dummy_service_call = false;
+	private string call_time;
+	private TextMeshPro CallTimeText;
 	private Text SystemClockText;
 
 	private FileStream file;
@@ -55,6 +60,9 @@ public class Experiment : MonoBehaviour {
 		GetSelfPositionToggle.onValueChanged.AddListener(StartStopGetSelfPosition);
 		SaveToggle = GameObject.Find("Main System/Main Canvas/Horizontal_0/Experiment UI/Save Self Position/Toggle").GetComponent<Toggle>();
 		SaveToggle.onValueChanged.AddListener(StartStopLogging);
+		DummyServiceCallToggle = GameObject.Find("Main System/Main Canvas/Horizontal_0/Experiment UI/Dummy ServiceCall/Toggle").GetComponent<Toggle>();
+		DummyServiceCallToggle.onValueChanged.AddListener(StartStopDummyServiceCall);
+		CallTimeText = GameObject.Find("CallTime TextMesh").GetComponent<TextMeshPro>();
 		SystemClockText = GameObject.Find("Main System/Main Canvas/Horizontal_0/Experiment UI/System Clock/Body").GetComponent<Text>();
 	}
 
@@ -170,6 +178,25 @@ public class Experiment : MonoBehaviour {
 				RosSocketClient.Publisher(topicname_tms_db_data, tmsdb_stamped);
 			}
 		}
+
+		if (dummy_service_call) {
+			if (DBAccessManager.IsConnected()) {
+				if (!DBAccessManager.CheckWaitAnything()) {
+					IEnumerator coroutine = DBAccessManager.ReadSPRUser();
+					StartCoroutine(coroutine);
+					call_time = now_time;
+				}
+				if (DBAccessManager.CheckWaitSPRUser()) {
+					if (DBAccessManager.CheckAbort()) {
+						DBAccessManager.FinishAccess();
+					}
+					if (DBAccessManager.CheckSuccess()) {
+						DBAccessManager.FinishAccess();
+						CallTimeText.text = "Time of Start Service Call\n" + call_time;
+					}
+				}
+			}
+		}
 	}
 
 	private void StartStopLogging(bool toggle) {
@@ -205,6 +232,10 @@ public class Experiment : MonoBehaviour {
 			//StartStopGetSelfPosition(false);
 		}
 		get_self_position = toggle;
+	}
+
+	private void StartStopDummyServiceCall(bool toggle) {
+		dummy_service_call = toggle;
 	}
 
 	/*****************************************************************
