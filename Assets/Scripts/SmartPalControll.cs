@@ -71,7 +71,7 @@ public class SmartPalControll : MonoBehaviour {
 	//private InformationCanvasManager InformationCanvas;
 
 	//キャリブシステム
-	private BsenCalibrationSystem CalibrationSystem;
+	private BsenLocalizationSystem CalibrationSystem;
 
 	//RosSocketClientまわり
 	private RosSocketClient RosSocketClient;
@@ -149,7 +149,7 @@ public class SmartPalControll : MonoBehaviour {
 		//MyConsoleCanvas = GameObject.Find("Main System/MyConsole Canvas").GetComponent<MyConsoleCanvasManager>();
 		//InformationCanvas = GameObject.Find("Main System/Information Canvas").GetComponent<InformationCanvasManager>();
 
-		CalibrationSystem = GameObject.Find("Main System").GetComponent<BsenCalibrationSystem>();
+		CalibrationSystem = GameObject.Find("Main System").GetComponent<BsenLocalizationSystem>();
 		RosSocketClient = GameObject.Find("Ros Socket Client").GetComponent<RosSocketClient>();
 		DBAccessManager = GameObject.Find("Ros Socket Client").GetComponent<DBAccessManager>();
 
