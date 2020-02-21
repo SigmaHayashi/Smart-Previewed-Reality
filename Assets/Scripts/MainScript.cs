@@ -12,7 +12,8 @@ public enum CanvasName {
 	CalibrationCanvas = 1,
 	MyConsoleCanvas = 2,
 	InformationCanvas = 3,
-	SettingsCanvas = 4
+	SettingsCanvas = 4,
+	SelfLocalizationCanvas = 5
 }
 
 public class MainScript : MonoBehaviour {
