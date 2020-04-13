@@ -22,7 +22,7 @@ public class BsenLocalizationSystem : MonoBehaviour {
 	// 平面を表示するやつ関連
 	private GameObject PlaneDiscovery;
 	private GameObject PlaneGenerator;
-	private readonly bool active_plane_discovery = false;
+	[SerializeField] private bool active_plane_discovery = false;
 
 	//B-senのモデルのShader制御用
 	private ShaderChange BsenModelShader;

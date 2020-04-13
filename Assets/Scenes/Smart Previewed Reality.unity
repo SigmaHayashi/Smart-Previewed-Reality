@@ -39444,6 +39444,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37f99612bdb95ca41a607338729a9b93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  active_plane_discovery: 0
 --- !u!1 &554806546
 GameObject:
   m_ObjectHideFlags: 0
@@ -62681,10 +62682,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1942233325}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cdee3a452257cbb4190b117501a8b370, type: 3}
+  m_Script: {fileID: 11500000, guid: 17f1fbd7b71e8d74197958b45e8dad01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  flash_time: 0.1
 --- !u!114 &1942233328
 MonoBehaviour:
   m_ObjectHideFlags: 0

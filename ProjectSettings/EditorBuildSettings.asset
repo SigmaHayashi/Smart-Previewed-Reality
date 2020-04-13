@@ -5,7 +5,10 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Smart Previewed Reality.unity
     guid: b70925a70d3864e4f9bd998dfea8ee1b
+  - enabled: 1
+    path: Assets/Scenes/Self Localization Scene.unity
+    guid: df766ff493d15ea489b8bbb61065b4e5
   m_configObjects: {}
