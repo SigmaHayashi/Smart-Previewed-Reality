@@ -35,7 +35,7 @@ public class BsenLocalizationSystem : MonoBehaviour {
 	//キャリブレーションの状況
 	private bool finish_calibration = false;
 	public bool FinishCalibration() { return finish_calibration; }
-	enum State{
+	public enum State{
 		Error = -1,
 		Start = 0,
 		TryToConnect = 1,

@@ -35,42 +35,43 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 	private bool is_finish_start = false;
 	public bool IsFinishStart() { return is_finish_start; }
 
-	enum State {
+	public enum State {
 		None,
 		SetPosition,
 		SetDirection,
 		SetHeight
 	}
-	private State self_localization_state = State.SetPosition;
-
+	private State self_localization_state = State.None;
+	public State GetState() { return self_localization_state; }
 
 	void Start() {
 		//Main Systemを取得
-		///Main = GameObject.Find("Main System").GetComponent<MainScript>();
+		Main = GameObject.Find("Main System").GetComponent<MainScript>();
 
 		//Canvas遷移ボタンを取得・設定
-		BackToMainButton = GameObject.Find("Self Localization Canvas/Horizontal/Vertical_1/Back To Main Button").GetComponent<Button>();
-		///BackToMainButton.onClick.AddListener(Main.ChangeToMain);
+		BackToMainButton = GameObject.Find("Main System/Self Localization Canvas/Horizontal/Vertical_1/Back To Main Button").GetComponent<Button>();
+		BackToMainButton.onClick.AddListener(Main.ChangeToMain);
 
 		//UIを取得・設定
-		BackButton = GameObject.Find("Self Localization Canvas/Horizontal/Vertical_1/Back Button").GetComponent<Button>();
-		OKButton = GameObject.Find("Self Localization Canvas/Horizontal/Vertical_1/OK Button").GetComponent<Button>();
-		InfoText = GameObject.Find("Self Localization Canvas/Horizontal/Vertical_0/Info Text").GetComponent<Text>();
-		SelectHeightSlider = GameObject.Find("Self Localization Canvas/Horizontal/Vertical_0/Select Height Slider").GetComponent<Slider>();
-		HeightSlider_Text = GameObject.Find("Self Localization Canvas/Horizontal/Vertical_0/Select Height Slider/Handle Slide Area/Handle/Text Box/Text").GetComponent<Text>();
+		BackButton = GameObject.Find("Main System/Self Localization Canvas/Horizontal/Vertical_1/Back Button").GetComponent<Button>();
+		OKButton = GameObject.Find("Main System/Self Localization Canvas/Horizontal/Vertical_1/OK Button").GetComponent<Button>();
+		InfoText = GameObject.Find("Main System/Self Localization Canvas/Horizontal/Vertical_0/Info Text").GetComponent<Text>();
+		SelectHeightSlider = GameObject.Find("Main System/Self Localization Canvas/Horizontal/Vertical_0/Select Height Slider").GetComponent<Slider>();
+		HeightSlider_Text = GameObject.Find("Main System/Self Localization Canvas/Horizontal/Vertical_0/Select Height Slider/Handle Slide Area/Handle/Text Box/Text").GetComponent<Text>();
 		BackButton.onClick.AddListener(OnPushBack);
 		BackButton.gameObject.SetActive(false);
 		OKButton.onClick.AddListener(OnPushOK);
 		OKButton.gameObject.SetActive(false);
+		SelectHeightSlider.onValueChanged.AddListener(Change_HeightText);
 		SelectHeightSlider.gameObject.SetActive(false);
 
 		//各種オブジェクトを取得
 		ARCoreDeviceCamera = GameObject.Find("ARCore Device/First Person Camera");
 		UICamera = GameObject.Find("Objects for Self Localization/UI Camera").GetComponent<Camera>();
-		PositionAndDirectionUI = GameObject.Find("Self Localization Canvas/Position and Direction UI");
-		PositionImage = GameObject.Find("Self Localization Canvas/Position and Direction UI/Position Image");
-		DirectionImage_Circle = GameObject.Find("Self Localization Canvas/Position and Direction UI/Direction Image/Circle");
-		DirectionImage_Arrow = GameObject.Find("Self Localization Canvas/Position and Direction UI/Direction Image/Arrow");
+		PositionAndDirectionUI = GameObject.Find("Main System/Self Localization Canvas/Position and Direction UI");
+		PositionImage = GameObject.Find("Main System/Self Localization Canvas/Position and Direction UI/Position Image");
+		DirectionImage_Circle = GameObject.Find("Main System/Self Localization Canvas/Position and Direction UI/Direction Image/Circle");
+		DirectionImage_Arrow = GameObject.Find("Main System/Self Localization Canvas/Position and Direction UI/Direction Image/Arrow");
 		ARCoreDeviceCamera.SetActive(false);
 		PositionImage.SetActive(false);
 		DirectionImage_Circle.SetActive(false);
@@ -81,10 +82,6 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 
 
 	void Update() {
-		//スライダーの横の値を計算して表示
-		slider_height = SelectHeightSlider.value * height_max;
-		HeightSlider_Text.text = slider_height.ToString("f2") + " [m]";
-
 		//タッチした場所を取得
 		if (Application.isEditor) {
 			if (Input.GetMouseButton(0)) {
@@ -119,7 +116,6 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 							break;
 					}
 					
-
 					/*
 					Rect Rect_BackButton = BackButton.gameObject.GetComponent<RectTransform>().rect;
 					Debug.Log(Rect_BackButton);
@@ -179,7 +175,6 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 				}
 			}
 		}
-
 	}
 
 
@@ -234,5 +229,45 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 	 **************************************************/
 	public void Change_InfoText(string message) {
 		InfoText.text = message;
+	}
+
+	/**************************************************
+	 * SetPositionモードで呼び出す関数
+	 **************************************************/
+	public Vector3 OnSelectPosition(Vector2 touch_position) {
+		if (!PositionImage.activeInHierarchy) {
+			PositionImage.SetActive(true);
+			OKButton.gameObject.SetActive(true);
+		}
+		PositionAndDirectionUI.transform.position = new Vector3(touch_position.x, touch_position.y, 0.0f);
+		select_position = touch_position;
+
+		return UICamera.ScreenToWorldPoint(touch_position);
+	}
+
+	/**************************************************
+	 * SetDirectionモードで呼び出す関数
+	 **************************************************/
+	public float OnSelectDirection(Vector2 touch_position) {
+		if (!DirectionImage_Arrow.activeInHierarchy) {
+			DirectionImage_Arrow.SetActive(true);
+			OKButton.gameObject.SetActive(true);
+		}
+		select_direction = Mathf.Atan2(touch_position.y - select_position.y, touch_position.x - select_position.x) * Mathf.Rad2Deg - 90.0f;
+		DirectionImage_Arrow.gameObject.GetComponent<RectTransform>().transform.eulerAngles = new Vector3(0.0f, 0.0f, select_direction);
+
+		return select_direction + 90;
+	}
+
+	public void OnSelectHeight() {
+
+	}
+
+	/**************************************************
+	 * スライダーの横の値を計算して表示
+	 **************************************************/
+	private void Change_HeightText(float value) {
+		slider_height = SelectHeightSlider.value * height_max;
+		HeightSlider_Text.text = slider_height.ToString("f2") + " [m]";
 	}
 }

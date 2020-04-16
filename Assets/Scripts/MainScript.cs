@@ -40,6 +40,7 @@ public class MainScript : MonoBehaviour {
 	private MyConsoleCanvasManager MyConsoleCanvas;
 	private InformationCanvasManager InformationCanvas;
 	private SettingsCanvasManager SettingsCanvas;
+	private SelfLocalizationCanvasManager SelfLocalizationCanvas;
 
 	//どのキャンバスを使用中か示す変数と対応する辞書
 	private CanvasName active_canvas = CanvasName.Error;
@@ -85,6 +86,9 @@ public class MainScript : MonoBehaviour {
 	private bool	information_subgoal_gripper_update = false;
 	private float	information_subgoal_gripper_buffer;
 
+	//Self Localization Canvasのバッファ
+	private string self_localization_info_text_buffer;
+
 
 	/**************************************************
 	 * Start()
@@ -104,6 +108,7 @@ public class MainScript : MonoBehaviour {
 		MyConsoleCanvas = GameObject.Find("Main System/MyConsole Canvas").GetComponent<MyConsoleCanvasManager>();
 		InformationCanvas = GameObject.Find("Main System/Information Canvas").GetComponent<InformationCanvasManager>();
 		SettingsCanvas = GameObject.Find("Main System/Settings Canvas").GetComponent<SettingsCanvasManager>();
+		SelfLocalizationCanvas = GameObject.Find("Main System/Self Localization Canvas").GetComponent<SelfLocalizationCanvasManager>();
 
 		//CanvasをDictionaryに追加
 		CanvasDictionary.Add(CanvasName.MainCanvas, MainCanvas.gameObject);
@@ -111,6 +116,7 @@ public class MainScript : MonoBehaviour {
 		CanvasDictionary.Add(CanvasName.MyConsoleCanvas, MyConsoleCanvas.gameObject);
 		CanvasDictionary.Add(CanvasName.InformationCanvas, InformationCanvas.gameObject);
 		CanvasDictionary.Add(CanvasName.SettingsCanvas, SettingsCanvas.gameObject);
+		CanvasDictionary.Add(CanvasName.SelfLocalizationCanvas, SelfLocalizationCanvas.gameObject);
 	}
 
 
@@ -161,7 +167,8 @@ public class MainScript : MonoBehaviour {
 			CalibrationCanvas.IsFinishStart() &&
 			MyConsoleCanvas.IsFinishStart() &&
 			InformationCanvas.IsFinishStart() &&
-			SettingsCanvas.IsFinishStart()) {
+			SettingsCanvas.IsFinishStart() &&
+			SelfLocalizationCanvas.IsFinishStart()) {
 			foreach(KeyValuePair<CanvasName, GameObject> canvas in CanvasDictionary) {
 				if (canvas.Key != CanvasName.MainCanvas) {
 					canvas.Value.SetActive(false);
@@ -194,15 +201,7 @@ public class MainScript : MonoBehaviour {
 			main_info_text_buffer = null;
 		}
 	}
-
-	/**************************************************
-	 * バッファ更新：Main Canvas
-	 **************************************************/
-	/*
-	public void Main_UpdateBuffer_InfoText(string message) {
-		main_info_text_buffer = message;
-	}
-	*/
+	
 	/**************************************************
 	 * Main CanvasのAPI
 	 **************************************************/
@@ -236,23 +235,7 @@ public class MainScript : MonoBehaviour {
 			calibration_camerainfo_text_buffer = null;
 		}
 	}
-
-	/**************************************************
-	 * バッファ更新：Calibration Canvas
-	 **************************************************/
-	/*
-	public void Calibration_UpdateBuffer_OffsetInfoText(string message) {
-		calibration_offsetinfo_text_buffer = message;
-	}
-
-	public void Calibration_UpdateBuffer_DeviceInfoText(string message) {
-		calibration_deviceinfo_text_buffer = message;
-	}
-
-	public void Calibration_UpdateBuffer_CameraInfoText(string message) {
-		calibration_camerainfo_text_buffer = message;
-	}
-	*/
+	
 	/**************************************************
 	 * Calibration CanvasのAPI
 	 **************************************************/
@@ -298,20 +281,7 @@ public class MainScript : MonoBehaviour {
 		MyConsoleCanvas.Add(MyConsole_Message_Buffer);
 		MyConsole_Message_Buffer = new List<object>();
 	}
-
-	/**************************************************
-	 * バッファ更新：MyConsole Canvas
-	 **************************************************/
-	/*
-	public void MyConsole_UpdateBuffer_Delete() {
-		myconsole_delete_buffer = true;
-		MyConsole_Message_Buffer = new List<object>();
-	}
-
-	public void MyConsole_UpdateBuffer_Message(object message) {
-		MyConsole_Message_Buffer.Add(message);
-	}
-	*/
+	
 	/**************************************************
 	 * MyConsole CanvasのAPI
 	 **************************************************/
@@ -341,23 +311,11 @@ public class MainScript : MonoBehaviour {
 		CanvasDictionary[active_canvas].SetActive(false);
 		active_canvas = CanvasName.InformationCanvas;
 		CanvasDictionary[active_canvas].SetActive(true);
-
-		/*
-		if (information_vicon_irvsmarker_text_buffer != null) {
-			InformationCanvas.Change_Vicon_IrvsMarkerInfoText(information_vicon_irvsmarker_text_buffer);
-			information_vicon_irvsmarker_text_buffer = null;
-		}
-		*/
+		
 		if(information_vicon_irvsmarker_update) {
 			InformationCanvas.Update_ViconIrvsMarkerInfoText(information_vicon_irvsmarker_pos_buffer, information_vicon_irvsmarker_yaw_buffer);
 			information_vicon_irvsmarker_update = false;
 		}
-		/*
-		if (information_vicon_smartpal_text_buffer != null) {
-			InformationCanvas.Change_Vicon_SmartPalInfoText(information_vicon_smartpal_text_buffer);
-			information_vicon_smartpal_text_buffer = null;
-		}
-		*/
 		if (information_vicon_smartpal_update) {
 			InformationCanvas.Update_ViconSmartPalInfoText(information_vicon_smartpal_pos_buffer, information_vicon_smartpal_yaw_buffer);
 			information_vicon_smartpal_update = false;
@@ -398,44 +356,26 @@ public class MainScript : MonoBehaviour {
 			information_subgoal_gripper_update = false;
 		}
 	}
-
-	/**************************************************
-	 * バッファ更新：Information Canvas
-	 **************************************************/
-	/*
-	public void Information_UpdateBuffer_ViconIrvsMarkerText(string message) {
-		information_vicon_irvsmarker_text_buffer = message;
-	}
-
-	public void Information_UpdateBuffer_ViconSmartPalText(string message) {
-		information_vicon_smartpal_text_buffer = message;
-	}
-	*/
+	
 	/**************************************************
 	 * Information CanvasのAPI
 	 **************************************************/
-	//public void Information_Change_Vicon_IrvsMarkerInfoText(string message) {
 	public void Information_Update_ViconIrvsMarkerInfoText(Vector3 pos, float yaw) {
 		if (WhichCanvasActive() == CanvasName.InformationCanvas) {
-			//InformationCanvas.Change_Vicon_IrvsMarkerInfoText(message);
 			InformationCanvas.Update_ViconIrvsMarkerInfoText(pos, yaw);
 		}
 		else {
-			//information_vicon_irvsmarker_text_buffer = message;
 			information_vicon_irvsmarker_update = true;
 			information_vicon_irvsmarker_pos_buffer = pos;
 			information_vicon_irvsmarker_yaw_buffer = yaw;
 		}
 	}
-
-	//public void Information_Change_Vicon_SmartPalInfoText(string message) {
+	
 	public void Information_Update_ViconSmartPalInfoText(Vector3 pos, float yaw) {
 		if (WhichCanvasActive() == CanvasName.InformationCanvas) {
-			//InformationCanvas.Change_Vicon_SmartPalInfoText(message);
 			InformationCanvas.Update_ViconSmartPalInfoText(pos, yaw);
 		}
 		else {
-			//information_vicon_smartpal_text_buffer = message;
 			information_vicon_smartpal_update = true;
 			information_vicon_smartpal_pos_buffer = pos;
 			information_vicon_smartpal_yaw_buffer = yaw;
@@ -523,5 +463,31 @@ public class MainScript : MonoBehaviour {
 		CanvasDictionary[active_canvas].SetActive(false);
 		active_canvas = CanvasName.SettingsCanvas;
 		CanvasDictionary[active_canvas].SetActive(true);
+	}
+
+	/**************************************************
+	 * 画面の切り替え：Self Localization Canvas
+	 **************************************************/
+	public void ChangeToSelfLocalization() {
+		CanvasDictionary[active_canvas].SetActive(false);
+		active_canvas = CanvasName.SelfLocalizationCanvas;
+		CanvasDictionary[active_canvas].SetActive(true);
+
+		if (self_localization_info_text_buffer != null) {
+			SelfLocalizationCanvas.Change_InfoText(self_localization_info_text_buffer);
+			self_localization_info_text_buffer = null;
+		}
+	}
+
+	/**************************************************
+	 * Self Localization CanvasのAPI
+	 **************************************************/
+	public void SelfLocalization_Change_InfoText(string message) {
+		if (WhichCanvasActive() == CanvasName.SelfLocalizationCanvas) {
+			SelfLocalizationCanvas.Change_InfoText(message);
+		}
+		else {
+			self_localization_info_text_buffer = message;
+		}
 	}
 }
