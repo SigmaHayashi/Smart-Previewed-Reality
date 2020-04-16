@@ -4,11 +4,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using GoogleARCore;
+using UnityEngine.EventSystems;
 
 public class BsenLocalizationSystem : MonoBehaviour {
 
 	//UI制御用
 	private MainScript Main;
+	private SelfLocalizationCanvasManager SelfLocalizationCanvas;
 	private CalibrationCanvasManager CalibrationCanvas;
 	
 	//通信制御用
@@ -41,9 +43,11 @@ public class BsenLocalizationSystem : MonoBehaviour {
 		TryToConnect = 1,
 		TryToAccessDatabase = 2,
 		SearchImage = 3,
-		Ready = 4
+		Ready = 4,
+		SelfLocalization = 10
 	}
 	private State calibration_state = (int)State.Start;
+	private bool start_self_localization = false;
 
 	//オフセット情報
 	private Vector3 not_offset_pos = new Vector3();
@@ -54,6 +58,7 @@ public class BsenLocalizationSystem : MonoBehaviour {
 	// 最初の1回呼び出されるよ～
 	void Start() {
 		Main = GameObject.Find("Main System").GetComponent<MainScript>();
+		SelfLocalizationCanvas = GameObject.Find("Main System/Self Localization Canvas").GetComponent<SelfLocalizationCanvasManager>();
 		CalibrationCanvas = GameObject.Find("Main System/Calibration Canvas").GetComponent<CalibrationCanvasManager>();
 		
 		DBAccessManager = GameObject.Find("Ros Socket Client").GetComponent<DBAccessManager>();
@@ -126,102 +131,141 @@ public class BsenLocalizationSystem : MonoBehaviour {
 
 		//自動キャリブ終了前
 		if (!FinishCalibration()) {
-			switch (calibration_state) {
-				//DBにアクセス開始
-				case State.TryToConnect:
-					if (DBAccessManager.IsConnected() && !DBAccessManager.CheckWaitAnything()) {
-						IEnumerator coroutine = DBAccessManager.ReadViconIrvsMarker();
-						StartCoroutine(coroutine);
-						calibration_state = State.TryToAccessDatabase;
-					}
-					break;
-
-				//DBのデータをもとにモデルの位置＆回転を変更
-				case State.TryToAccessDatabase:
-					if (DBAccessManager.CheckWaitViconIrvsMarker()) {
-						if (DBAccessManager.CheckAbort()) {
-							DBAccessManager.FinishAccess();
-							calibration_state = State.TryToConnect;
+			if(Main.WhichCanvasActive() == CanvasName.MainCanvas) {
+				switch (calibration_state) {
+					//DBにアクセス開始
+					case State.TryToConnect:
+						if (DBAccessManager.IsConnected() && !DBAccessManager.CheckWaitAnything()) {
+							IEnumerator coroutine = DBAccessManager.ReadViconIrvsMarker();
+							StartCoroutine(coroutine);
+							calibration_state = State.TryToAccessDatabase;
 						}
-					}
-					if (DBAccessManager.CheckSuccess()) {
-						//ServiceResponseDB responce = DBAccessManager.GetResponce();
-						DBValue responce_value = DBAccessManager.GetResponceValue();
-						DBAccessManager.FinishAccess();
+						break;
 
-						//位置を取得＆変換
-						//Vector3 marker_position = new Vector3((float)responce.values.tmsdb[0].x, (float)responce.values.tmsdb[0].y, (float)responce.values.tmsdb[0].z);
-						Vector3 marker_position = new Vector3((float)responce_value.tmsdb[0].x, (float)responce_value.tmsdb[0].y, (float)responce_value.tmsdb[0].z);
-						marker_position = Ros2UnityPosition(marker_position);
-						marker_position += Main.GetConfig().vicon_offset_pos;
-						marker_position += Main.GetConfig().calibration_offset_pos;
-						Debug.Log("Marker Pos: " + marker_position);
-						Main.MyConsole_Add("Marker Pos: " + marker_position.ToString("f4"));
-
-						//回転を取得＆変換
-						Vector3 marker_euler = new Vector3(
-							(float)responce_value.tmsdb[0].rr * Mathf.Rad2Deg,
-							(float)responce_value.tmsdb[0].rp * Mathf.Rad2Deg,
-							(float)responce_value.tmsdb[0].ry * Mathf.Rad2Deg);
-						marker_euler = Ros2UnityRotation(marker_euler);
-
-						marker_euler.x = 0.0f;
-						marker_euler.z = 0.0f;
-						marker_euler.y += Main.GetConfig().calibration_offset_yaw;
-						Debug.Log("Marker Rot: " + marker_euler);
-						Main.MyConsole_Add("Marker Rot: " + marker_euler.ToString("f4"));
-
-						Main.Information_Update_ViconIrvsMarkerInfoText(marker_position, marker_euler.y);
-
-						//位置と回転をモデル上のマーカーに適用
-						IrvsMarker = Instantiate(new GameObject());
-						IrvsMarker.name = "IRVS Marker";
-						IrvsMarker.transform.SetParent(GameObject.Find("rostms/world_link").transform, false);
-						IrvsMarker.transform.localPosition = marker_position;
-						IrvsMarker.transform.localEulerAngles = marker_euler;
-
-						calibration_state = State.SearchImage;
-					}
-					break;
-
-				//画像認識したらキャリブレーションしてモデルを表示
-				//UnityEditor上ではここはスキップ
-				case State.SearchImage:
-					if (Application.isEditor) {
-						//BsenModelShader.alpha = 0.6f;
-						//BsenModelShader.ChangeColors();
-						//BsenModelShader.ChangeToOriginColors(0.6f);
-						BsenModelShader.ChangeToOriginColors(Main.GetConfig().room_alpha);
-
-						calibration_state = State.Ready;
-						finish_calibration = true;
-						return;
-					}
-					if (!detected_marker) {
-						foreach (var image in AugmentedImagesList) {
-							if (image.TrackingState == TrackingState.Tracking) {
-								detected_marker = true;
-								MarkerImage = image;
-
-								AutoPositioning();
-
-								//BsenModelShader.alpha = 0.6f;
-								//BsenModelShader.ChangeColors();
-								//BsenModelShader.ChangeToOriginColors(0.6f);
-								BsenModelShader.ChangeToOriginColors(Main.GetConfig().room_alpha);
-
-								calibration_state = State.Ready;
-								finish_calibration = true;
+					//DBのデータをもとにモデルの位置＆回転を変更
+					case State.TryToAccessDatabase:
+						if (DBAccessManager.CheckWaitViconIrvsMarker()) {
+							if (DBAccessManager.CheckAbort()) {
+								DBAccessManager.FinishAccess();
+								calibration_state = State.TryToConnect;
 							}
 						}
+						if (DBAccessManager.CheckSuccess()) {
+							//ServiceResponseDB responce = DBAccessManager.GetResponce();
+							DBValue responce_value = DBAccessManager.GetResponceValue();
+							DBAccessManager.FinishAccess();
+
+							//位置を取得＆変換
+							//Vector3 marker_position = new Vector3((float)responce.values.tmsdb[0].x, (float)responce.values.tmsdb[0].y, (float)responce.values.tmsdb[0].z);
+							Vector3 marker_position = new Vector3((float)responce_value.tmsdb[0].x, (float)responce_value.tmsdb[0].y, (float)responce_value.tmsdb[0].z);
+							marker_position = Ros2UnityPosition(marker_position);
+							marker_position += Main.GetConfig().vicon_offset_pos;
+							marker_position += Main.GetConfig().calibration_offset_pos;
+							Debug.Log("Marker Pos: " + marker_position);
+							Main.MyConsole_Add("Marker Pos: " + marker_position.ToString("f4"));
+
+							//回転を取得＆変換
+							Vector3 marker_euler = new Vector3(
+								(float)responce_value.tmsdb[0].rr * Mathf.Rad2Deg,
+								(float)responce_value.tmsdb[0].rp * Mathf.Rad2Deg,
+								(float)responce_value.tmsdb[0].ry * Mathf.Rad2Deg);
+							marker_euler = Ros2UnityRotation(marker_euler);
+
+							marker_euler.x = 0.0f;
+							marker_euler.z = 0.0f;
+							marker_euler.y += Main.GetConfig().calibration_offset_yaw;
+							Debug.Log("Marker Rot: " + marker_euler);
+							Main.MyConsole_Add("Marker Rot: " + marker_euler.ToString("f4"));
+
+							Main.Information_Update_ViconIrvsMarkerInfoText(marker_position, marker_euler.y);
+
+							//位置と回転をモデル上のマーカーに適用
+							IrvsMarker = Instantiate(new GameObject());
+							IrvsMarker.name = "IRVS Marker";
+							IrvsMarker.transform.SetParent(GameObject.Find("rostms/world_link").transform, false);
+							IrvsMarker.transform.localPosition = marker_position;
+							IrvsMarker.transform.localEulerAngles = marker_euler;
+
+							calibration_state = State.SearchImage;
+						}
+						break;
+
+					//画像認識したらキャリブレーションしてモデルを表示
+					//UnityEditor上ではここはスキップ
+					case State.SearchImage:
+						if (Application.isEditor) {
+							BsenModelShader.ChangeToOriginColors(Main.GetConfig().room_alpha);
+
+							calibration_state = State.Ready;
+							finish_calibration = true;
+							return;
+						}
+						if (!detected_marker) {
+							foreach (var image in AugmentedImagesList) {
+								if (image.TrackingState == TrackingState.Tracking) {
+									detected_marker = true;
+									MarkerImage = image;
+
+									AutoPositioning();
+
+									BsenModelShader.ChangeToOriginColors(Main.GetConfig().room_alpha);
+
+									calibration_state = State.Ready;
+									finish_calibration = true;
+								}
+							}
+						}
+
+						//自動キャリブ終了時の位置と回転を保存
+						not_offset_pos = ARCoreDevice.transform.position;
+						not_offset_yaw = ARCoreDevice.transform.eulerAngles.y;
+
+						ChangePlanePos();
+						break;
+				}
+			}
+			else if(Main.WhichCanvasActive() == CanvasName.SelfLocalizationCanvas) {
+				if (!start_self_localization) {
+					SelfLocalizationCanvas.StartSelfLocalization();
+					start_self_localization = true;
+				}
+
+				//タッチした場所を取得
+				bool is_touched = false;
+				Vector2 touch_position = new Vector2();
+				if (Application.isEditor) {
+					if (Input.GetMouseButton(0)) {
+						if (!EventSystem.current.IsPointerOverGameObject()) {
+							touch_position = Input.mousePosition;
+							touch_position.x = Mathf.Clamp(touch_position.x, 0.0f, Screen.width);
+							touch_position.y = Mathf.Clamp(touch_position.y, 0.0f, Screen.height);
+							//touch_position.z = UICamera.transform.position.y;
+
+							Debug.Log("Touch : " + touch_position.ToString("f0"));
+
+							is_touched = true;
+						}
 					}
+				}
+				else {
 
-					//自動キャリブ終了時の位置と回転を保存
-					not_offset_pos = ARCoreDevice.transform.position;
-					not_offset_yaw = ARCoreDevice.transform.eulerAngles.y;
+				}
 
-					ChangePlanePos();
-					break;
+				if (is_touched) {
+					switch (SelfLocalizationCanvas.GetState()) {
+						case SelfLocalizationCanvasManager.State.SetPosition:
+							Vector3 touch_position_world = SelfLocalizationCanvas.OnSelectPosition(touch_position);
+							Debug.Log("Touch in world : " + touch_position_world.ToString("f4"));
+							break;
+
+						case SelfLocalizationCanvasManager.State.SetDirection:
+							float self_localization_direction = SelfLocalizationCanvas.OnSelectDirection(touch_position);
+							break;
+
+						case SelfLocalizationCanvasManager.State.SetHeight:
+							break;
+					}
+				}
 			}
 		}
 		else { // 自動キャリブ終了後

@@ -29,7 +29,8 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 	private GameObject DirectionImage_Circle;
 	private GameObject DirectionImage_Arrow;
 	private Vector2 select_position;
-	private float select_direction;
+	//private float select_direction;
+	private GameObject ObjectsForSelfLocalization;
 
 	// Startが終わったかどうか
 	private bool is_finish_start = false;
@@ -43,6 +44,7 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 	}
 	private State self_localization_state = State.None;
 	public State GetState() { return self_localization_state; }
+
 
 	void Start() {
 		//Main Systemを取得
@@ -67,15 +69,17 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 
 		//各種オブジェクトを取得
 		ARCoreDeviceCamera = GameObject.Find("ARCore Device/First Person Camera");
-		UICamera = GameObject.Find("Objects for Self Localization/UI Camera").GetComponent<Camera>();
+		UICamera = GameObject.Find("Objects For Self Localization/UI Camera").GetComponent<Camera>();
 		PositionAndDirectionUI = GameObject.Find("Main System/Self Localization Canvas/Position and Direction UI");
 		PositionImage = GameObject.Find("Main System/Self Localization Canvas/Position and Direction UI/Position Image");
 		DirectionImage_Circle = GameObject.Find("Main System/Self Localization Canvas/Position and Direction UI/Direction Image/Circle");
 		DirectionImage_Arrow = GameObject.Find("Main System/Self Localization Canvas/Position and Direction UI/Direction Image/Arrow");
-		ARCoreDeviceCamera.SetActive(false);
+		ObjectsForSelfLocalization = GameObject.Find("Objects For Self Localization");
+		//ARCoreDeviceCamera.SetActive(false);
 		PositionImage.SetActive(false);
 		DirectionImage_Circle.SetActive(false);
 		DirectionImage_Arrow.SetActive(false);
+		ObjectsForSelfLocalization.SetActive(false);
 
 		is_finish_start = true;
 	}
@@ -98,42 +102,35 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 
 					switch (self_localization_state) {
 						case State.SetPosition:
+							/*
 							if (!PositionImage.activeInHierarchy) {
 								PositionImage.SetActive(true);
 								OKButton.gameObject.SetActive(true);
 							}
 							PositionAndDirectionUI.transform.position = new Vector3(touch_position.x, touch_position.y, 0.0f);
 							select_position = touch_position;
+							*/
+							OnSelectPosition(touch_position);
 							break;
 
 						case State.SetDirection:
+							/*
 							if (!DirectionImage_Arrow.activeInHierarchy) {
 								DirectionImage_Arrow.SetActive(true);
 								OKButton.gameObject.SetActive(true);
 							}
 							select_direction = Mathf.Atan2(touch_position.y - select_position.y, touch_position.x - select_position.x) * Mathf.Rad2Deg - 90.0f;
 							DirectionImage_Arrow.gameObject.GetComponent<RectTransform>().transform.eulerAngles = new Vector3(0.0f, 0.0f, select_direction);
+							*/
+							OnSelectDirection(touch_position);
 							break;
 					}
-					
-					/*
-					Rect Rect_BackButton = BackButton.gameObject.GetComponent<RectTransform>().rect;
-					Debug.Log(Rect_BackButton);
-					Debug.Log(Rect_BackButton.Contains(touch_position));
-					*/
-					//Debug.Log(EventSystem.current.IsPointerOverGameObject());
 				}
 			}
 		}
 		else {
 			if(Input.touchCount > 0) {
 				Touch touch = Input.GetTouch(0);
-				/*
-				if (touch.phase == TouchPhase.Ended || EventSystem.current.IsPointerOverGameObject(touch.fingerId)) {
-					Change_InfoText("True");
-				}
-				else {
-				*/
 				if (touch.phase != TouchPhase.Ended && !EventSystem.current.IsPointerOverGameObject(touch.fingerId)) {
 					Change_InfoText("False");
 
@@ -155,21 +152,27 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 					*/
 					switch (self_localization_state) {
 						case State.SetPosition:
+							/*
 							if (!PositionImage.activeInHierarchy) {
 								PositionImage.SetActive(true);
 								OKButton.gameObject.SetActive(true);
 							}
 							PositionAndDirectionUI.transform.position = new Vector3(touch_position.x, touch_position.y, 0.0f);
 							select_position = touch_position;
+							*/
+							OnSelectPosition(touch_position);
 							break;
 
 						case State.SetDirection:
+							/*
 							if (!DirectionImage_Arrow.activeInHierarchy) {
 								DirectionImage_Arrow.SetActive(true);
 								OKButton.gameObject.SetActive(true);
 							}
 							select_direction = Mathf.Atan2(touch_position.y - select_position.y, touch_position.x - select_position.x) * Mathf.Rad2Deg - 90.0f;
 							DirectionImage_Arrow.gameObject.GetComponent<RectTransform>().transform.eulerAngles = new Vector3(0.0f, 0.0f, select_direction);
+							*/
+							OnSelectDirection(touch_position);
 							break;
 					}
 				}
@@ -232,6 +235,26 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 	}
 
 	/**************************************************
+	 * 手動位置合わせを開始
+	 **************************************************/
+	public void StartSelfLocalization() {
+		ARCoreDeviceCamera.SetActive(false);
+		ObjectsForSelfLocalization.SetActive(true);
+
+		self_localization_state = State.SetDirection;
+	}
+
+	/**************************************************
+	 * 手動位置合わせを終了
+	 **************************************************/
+	public void FinishSelfLocalization() {
+		ARCoreDeviceCamera.SetActive(true);
+		ObjectsForSelfLocalization.SetActive(false);
+
+		self_localization_state = State.None;
+	}
+
+	/**************************************************
 	 * SetPositionモードで呼び出す関数
 	 **************************************************/
 	public Vector3 OnSelectPosition(Vector2 touch_position) {
@@ -253,7 +276,7 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 			DirectionImage_Arrow.SetActive(true);
 			OKButton.gameObject.SetActive(true);
 		}
-		select_direction = Mathf.Atan2(touch_position.y - select_position.y, touch_position.x - select_position.x) * Mathf.Rad2Deg - 90.0f;
+		float select_direction = Mathf.Atan2(touch_position.y - select_position.y, touch_position.x - select_position.x) * Mathf.Rad2Deg - 90.0f;
 		DirectionImage_Arrow.gameObject.GetComponent<RectTransform>().transform.eulerAngles = new Vector3(0.0f, 0.0f, select_direction);
 
 		return select_direction + 90;

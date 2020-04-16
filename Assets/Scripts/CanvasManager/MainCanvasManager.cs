@@ -9,6 +9,7 @@ public class MainCanvasManager : MonoBehaviour {
 	private MainScript Main;
 
 	//Canvas遷移用ボタン
+	private Button ChangeToSelfLocalizationButton;
 	private Button ChangeToCalibrationButton;
 	private Button ChangeToMyConsoleButton;
 	private Button ChangeToInformationButton;
@@ -27,10 +28,12 @@ public class MainCanvasManager : MonoBehaviour {
 		Main = GameObject.Find("Main System").GetComponent<MainScript>();
 
 		//Canvas遷移用ボタンを取得・設定
+		ChangeToSelfLocalizationButton = GameObject.Find("Main System/Main Canvas/Horizontal_0/Vertical_0/Change To Self Localization Button").GetComponent<Button>();
 		ChangeToCalibrationButton = GameObject.Find("Main System/Main Canvas/Horizontal_0/Vertical_0/Change To Calibration Button").GetComponent<Button>();
 		ChangeToMyConsoleButton = GameObject.Find("Main System/Main Canvas/Horizontal_0/Vertical_0/Change To MyConsole Button").GetComponent<Button>();
 		ChangeToInformationButton = GameObject.Find("Main System/Main Canvas/Horizontal_0/Vertical_0/Change To Information Button").GetComponent<Button>();
 		ChangeToSettingsButton = GameObject.Find("Main System/Main Canvas/Horizontal_0/Vertical_0/Change To Settings Button").GetComponent<Button>();
+		ChangeToSelfLocalizationButton.onClick.AddListener(Main.ChangeToSelfLocalization);
 		ChangeToCalibrationButton.onClick.AddListener(Main.ChangeToCalibration);
 		ChangeToMyConsoleButton.onClick.AddListener(Main.ChangeToMyConsole);
 		ChangeToInformationButton.onClick.AddListener(Main.ChangeToInformation);
