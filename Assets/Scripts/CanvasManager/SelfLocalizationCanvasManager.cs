@@ -22,14 +22,12 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 	private float slider_height;
 
 	// 各種オブジェクト
-	//private GameObject ARCoreDeviceCamera;
 	private Camera UICamera;
 	private GameObject PositionAndDirectionUI;
 	private GameObject PositionImage;
 	private GameObject DirectionImage_Circle;
 	private GameObject DirectionImage_Arrow;
 	private Vector2 select_position;
-	//private float select_direction;
 	private GameObject ObjectsForSelfLocalization;
 
 	// Startが終わったかどうか
@@ -53,7 +51,6 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 
 		//Canvas遷移ボタンを取得・設定
 		BackToMainButton = GameObject.Find("Main System/Self Localization Canvas/Horizontal/Vertical_1/Back To Main Button").GetComponent<Button>();
-		//BackToMainButton.onClick.AddListener(Main.ChangeToMain);
 		BackToMainButton.onClick.AddListener(FinishSelfLocalization);
 
 		//UIを取得・設定
@@ -70,14 +67,12 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 		SelectHeightSlider.gameObject.SetActive(false);
 
 		//各種オブジェクトを取得
-		//ARCoreDeviceCamera = GameObject.Find("ARCore Device/First Person Camera");
 		UICamera = GameObject.Find("Objects For Self Localization/UI Camera").GetComponent<Camera>();
 		PositionAndDirectionUI = GameObject.Find("Main System/Self Localization Canvas/Position and Direction UI");
 		PositionImage = GameObject.Find("Main System/Self Localization Canvas/Position and Direction UI/Position Image");
 		DirectionImage_Circle = GameObject.Find("Main System/Self Localization Canvas/Position and Direction UI/Direction Image/Circle");
 		DirectionImage_Arrow = GameObject.Find("Main System/Self Localization Canvas/Position and Direction UI/Direction Image/Arrow");
 		ObjectsForSelfLocalization = GameObject.Find("Objects For Self Localization");
-		//ARCoreDeviceCamera.SetActive(false);
 		PositionImage.SetActive(false);
 		DirectionImage_Circle.SetActive(false);
 		DirectionImage_Arrow.SetActive(false);
@@ -88,62 +83,7 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 
 
 	void Update() {
-		/*
-		//タッチした場所を取得
-		if (Application.isEditor) {
-			if (Input.GetMouseButton(0)) {
-				if (!EventSystem.current.IsPointerOverGameObject()) {
-					Vector3 touch_position = Input.mousePosition;
-					touch_position.x = Mathf.Clamp(touch_position.x, 0.0f, Screen.width);
-					touch_position.y = Mathf.Clamp(touch_position.y, 0.0f, Screen.height);
-					touch_position.z = UICamera.transform.position.y;
-					Vector3 touch_position_world = UICamera.ScreenToWorldPoint(touch_position);
-					Debug.Log("Touch : " + touch_position.ToString("f0"));
-					Debug.Log("Touch in world : " + touch_position_world.ToString("f4"));
 
-					//GameObject.Find("Objects for Self Localization/Sphere").transform.position = touch_position_world;
-
-					switch (self_localization_state) {
-						case State.SetPosition:
-							OnSelectPosition(touch_position);
-							break;
-
-						case State.SetDirection:
-							OnSelectDirection(touch_position);
-							break;
-					}
-				}
-			}
-		}
-		else {
-			if(Input.touchCount > 0) {
-				Touch touch = Input.GetTouch(0);
-				if (touch.phase != TouchPhase.Ended && !EventSystem.current.IsPointerOverGameObject(touch.fingerId)) {
-					Change_InfoText("False");
-
-					Vector3 touch_position = touch.position;
-					touch_position.x = Mathf.Clamp(touch_position.x, 0.0f, Screen.width);
-					touch_position.y = Mathf.Clamp(touch_position.y, 0.0f, Screen.height);
-					touch_position.z = UICamera.transform.position.y;
-					Vector3 touch_position_world = UICamera.ScreenToWorldPoint(touch_position);
-					Debug.Log("Touch : " + touch_position.ToString("f0"));
-					Debug.Log("Touch in world : " + touch_position_world.ToString("f4"));
-
-					//GameObject.Find("Objects for Self Localization/Sphere").transform.position = touch_position_world;
-					
-					switch (self_localization_state) {
-						case State.SetPosition:
-							OnSelectPosition(touch_position);
-							break;
-
-						case State.SetDirection:
-							OnSelectDirection(touch_position);
-							break;
-					}
-				}
-			}
-		}
-		*/
 	}
 
 
@@ -188,20 +128,16 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 			case State.SetDirection:
 				self_localization_state = State.SetHeight;
 				SelectHeightSlider.gameObject.SetActive(true);
-				//UICamera.gameObject.SetActive(false);
 				ObjectsForSelfLocalization.SetActive(false);
 				PositionImage.SetActive(false);
 				DirectionImage_Circle.SetActive(false);
 				DirectionImage_Arrow.SetActive(false);
-
-				//GameObject.Find("rostms").GetComponent<ShaderChange>().ChangeToOriginColors(Main.GetConfig().room_alpha);
-
+				
 				Change_HeightText(SelectHeightSlider.value);
 				break;
 
 			case State.SetHeight:
 				self_localization_state = State.Complete;
-				//FinishSelfLocalization();
 				break;
 		}
 	}
@@ -218,7 +154,6 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 	 **************************************************/
 	public void StartSelfLocalization() {
 		if(self_localization_state == State.None) {
-			//ARCoreDeviceCamera.SetActive(false);
 			ObjectsForSelfLocalization.SetActive(true);
 
 			PositionImage.SetActive(false);
@@ -236,7 +171,6 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 	 * 手動位置合わせを終了
 	 **************************************************/
 	public void FinishSelfLocalization() {
-		//ARCoreDeviceCamera.SetActive(true);
 		BackToMainButton.gameObject.SetActive(true);
 		ObjectsForSelfLocalization.SetActive(false);
 

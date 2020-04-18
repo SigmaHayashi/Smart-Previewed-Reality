@@ -46,8 +46,6 @@ public class BsenLocalizationSystem : MonoBehaviour {
 		Ready = 4
 	}
 	private State calibration_state = (int)State.Start;
-	//private bool start_self_localization = false;
-	//private int count = 0;
 
 	//オフセット情報
 	private Vector3 not_offset_pos = new Vector3();
@@ -103,24 +101,19 @@ public class BsenLocalizationSystem : MonoBehaviour {
 		switch (calibration_state) {
 			case State.Start:
 				Main.Main_Change_InfoText("Fail to Start");
-				//info_text_message = "Fail to Start";
 				break;
 			case State.TryToConnect:
 				Main.Main_Change_InfoText("Can NOT Connect [" + Main.GetConfig().ros_ip + "]");
-				//info_text_message = "Can NOT Connect [" + Main.GetConfig().ros_ip + "]";
 				break;
 			case State.TryToAccessDatabase:
 				Main.Main_Change_InfoText("Access to Database");
-				//info_text_message = "Access to Database";
 				break;
 			case State.SearchImage:
 				Main.Main_Change_InfoText("Please Look[IRVS Marker]");
-				//info_text_message = "Please Look[IRVS Marker]";
 				break;
 			case State.Ready:
 				if (DBAccessManager.IsConnected()) {
 					Main.Main_Change_InfoText("Ready to Previewed Reality");
-					//info_text_message = "Ready to Previewed Reality";
 				}
 				else {
 					Main.Main_Change_InfoText("Can NOT Connect [" + Main.GetConfig().ros_ip + "]");
@@ -128,16 +121,8 @@ public class BsenLocalizationSystem : MonoBehaviour {
 				break;
 			default:
 				Main.Main_Change_InfoText("Error : " + calibration_state.ToString());
-				//info_text_message = "Error : " + calibration_state.ToString();
 				break;
 		}
-
-		/*
-		if (!DBAccessManager.IsConnected()) {
-			info_text_message += "\nCan't connect to ROS-TMS";
-		}
-		Main.Main_Change_InfoText(info_text_message);
-		*/
 
 		//phase 0
 		//毎回すること
@@ -270,24 +255,17 @@ public class BsenLocalizationSystem : MonoBehaviour {
 
 		//手動位置合わせ
 		if (Main.WhichCanvasActive() == CanvasName.SelfLocalizationCanvas) {
-			/*
-			if (!start_self_localization) {
-				SelfLocalizationCanvas.StartSelfLocalization();
-				start_self_localization = true;
-			}
-			*/
 			SelfLocalizationCanvas.StartSelfLocalization();
 
 			//タッチした場所を取得
 			bool is_touched = false;
 			Vector2 touch_position = new Vector2();
-			if (Application.isEditor) {
+			if (Application.isEditor) { //エディタ上でのテスト
 				if (Input.GetMouseButton(0)) {
 					if (!EventSystem.current.IsPointerOverGameObject()) {
 						touch_position = Input.mousePosition;
 						touch_position.x = Mathf.Clamp(touch_position.x, 0.0f, Screen.width);
 						touch_position.y = Mathf.Clamp(touch_position.y, 0.0f, Screen.height);
-						//touch_position.z = UICamera.transform.position.y;
 
 						Debug.Log("Touch : " + touch_position.ToString("f0"));
 
@@ -295,57 +273,47 @@ public class BsenLocalizationSystem : MonoBehaviour {
 					}
 				}
 			}
-			else {
-				//Main.SelfLocalization_Change_InfoText("Test1");
-				//Main.SelfLocalization_Change_InfoText("Touch Count : " + Input.touchCount.ToString());
+			else { //実機
 				if (Input.touchCount > 0) {
-					//Main.SelfLocalization_Change_InfoText("Test2");
 					Touch touch = Input.GetTouch(0);
 					if (touch.phase != TouchPhase.Ended && !EventSystem.current.IsPointerOverGameObject(touch.fingerId)) {
-						//if (touch.phase != TouchPhase.Ended) {
-						//Main.SelfLocalization_Change_InfoText("Test3");
-						//Change_InfoText("False");
-
 						touch_position = touch.position;
 						touch_position.x = Mathf.Clamp(touch_position.x, 0.0f, Screen.width);
 						touch_position.y = Mathf.Clamp(touch_position.y, 0.0f, Screen.height);
-						//touch_position.z = UICamera.transform.position.y;
-
-						//Debug.Log("Touch : " + touch_position.ToString("f0"));
-						//Main.SelfLocalization_Change_InfoText("Touch : " + touch_position.ToString("f0"));
 
 						is_touched = true;
 					}
 				}
 			}
 
-			//Main.SelfLocalization_Change_InfoText("Test Count : " + count++.ToString());
-
 			if(SelfLocalizationCanvas.GetState() != SelfLocalizationCanvasManager.State.SetHeight && self_localization_apply) {
 				self_localization_apply = false;
 			}
 			
+			//手動位置合わせの状態別の対応
 			switch (SelfLocalizationCanvas.GetState()) {
-				case SelfLocalizationCanvasManager.State.SetPosition:
+				case SelfLocalizationCanvasManager.State.SetPosition: //位置決め
+					Main.SelfLocalization_Change_InfoText("Please Select Position");
 					if (is_touched) {
 						Vector3 touch_position_world = SelfLocalizationCanvas.OnSelectPosition(touch_position);
-						//Debug.Log("Touch in world : " + touch_position_world.ToString("f4"));
-						Main.SelfLocalization_Change_InfoText("Position : " + touch_position_world.ToString("f4"));
 
 						SelfLocalization_PositionBuffer = touch_position_world;
 					}
 					break;
 
-				case SelfLocalizationCanvasManager.State.SetDirection:
+				case SelfLocalizationCanvasManager.State.SetDirection: //方向決め
+					Main.SelfLocalization_Change_InfoText("Please Select Direction");
 					if (is_touched) {
 						float self_localization_direction = SelfLocalizationCanvas.OnSelectDirection(touch_position);
-						Main.SelfLocalization_Change_InfoText("Direction : " + self_localization_direction.ToString());
 
 						SelfLocalization_DirectionBuffer = self_localization_direction;
 					}
 					break;
 
-				case SelfLocalizationCanvasManager.State.SetHeight:
+				case SelfLocalizationCanvasManager.State.SetHeight: //高さ決め
+					Main.SelfLocalization_Change_InfoText("Please Select Height");
+
+					//ARCoreDeviceとCameraのオブジェクトを生成
 					GameObject device_object = new GameObject();
 					device_object.transform.position = ARCoreDevice.transform.position;
 					device_object.transform.eulerAngles = ARCoreDevice.transform.eulerAngles;
@@ -354,17 +322,22 @@ public class BsenLocalizationSystem : MonoBehaviour {
 					camera_object.transform.position = Camera.main.transform.position;
 					camera_object.transform.eulerAngles = Camera.main.transform.eulerAngles;
 
+					//親子関係は逆にしておく
 					device_object.transform.SetParent(camera_object.transform, true);
 
+					//高さ決めモードになったあと1回だけ実行
 					if (!self_localization_apply) {
 						SelfLocalization_PositionBuffer.y = SelfLocalizationCanvas.OnSelectHeight();
 
 						camera_object.transform.position = SelfLocalization_PositionBuffer;
 						camera_object.transform.eulerAngles = new Vector3(camera_object.transform.eulerAngles.x, SelfLocalization_DirectionBuffer, camera_object.transform.eulerAngles.z);
 
-						self_localization_apply = true;
-
 						BsenModelShader.ChangeToOriginColors(Main.GetConfig().room_alpha);
+
+						calibration_state = State.Ready;
+						finish_localization = true;
+
+						self_localization_apply = true;
 					}
 					else {
 						camera_object.transform.position = new Vector3(camera_object.transform.position.x, SelfLocalizationCanvas.OnSelectHeight(), camera_object.transform.position.z);
@@ -373,11 +346,13 @@ public class BsenLocalizationSystem : MonoBehaviour {
 					ARCoreDevice.transform.position = device_object.transform.position;
 					ARCoreDevice.transform.eulerAngles = device_object.transform.eulerAngles;
 
+					Destroy(device_object);
+					Destroy(camera_object);
 					break;
 
-				case SelfLocalizationCanvasManager.State.Complete:
-					calibration_state = State.Ready;
-					finish_localization = true;
+				case SelfLocalizationCanvasManager.State.Complete: //終わったらその位置をオフセットしてない位置として保存
+					not_offset_pos = ARCoreDevice.transform.position;
+					not_offset_yaw = ARCoreDevice.transform.eulerAngles.y;
 
 					SelfLocalizationCanvas.FinishSelfLocalization();
 					break;
