@@ -34,7 +34,7 @@ public class BsenLocalizationSystem : MonoBehaviour {
 	private AugmentedImage MarkerImage;
 	private bool detected_marker = false;
 
-	//キャリブレーションの状況
+	//位置合わせの状況
 	private bool finish_localization = false;
 	public bool IsFinishLocalization() { return finish_localization; }
 	public enum State{
@@ -56,6 +56,7 @@ public class BsenLocalizationSystem : MonoBehaviour {
 	//手動位置合わせ用
 	private Vector3 SelfLocalization_PositionBuffer = new Vector3();
 	private float SelfLocalization_DirectionBuffer = 0.0f;
+	private bool self_localization_apply = false;
 
 
 	// Start is called before the first frame update
@@ -98,26 +99,45 @@ public class BsenLocalizationSystem : MonoBehaviour {
 		}
 		*/
 
+		//string info_text_message;
 		switch (calibration_state) {
 			case State.Start:
 				Main.Main_Change_InfoText("Fail to Start");
+				//info_text_message = "Fail to Start";
 				break;
 			case State.TryToConnect:
 				Main.Main_Change_InfoText("Can NOT Connect [" + Main.GetConfig().ros_ip + "]");
+				//info_text_message = "Can NOT Connect [" + Main.GetConfig().ros_ip + "]";
 				break;
 			case State.TryToAccessDatabase:
 				Main.Main_Change_InfoText("Access to Database");
+				//info_text_message = "Access to Database";
 				break;
 			case State.SearchImage:
 				Main.Main_Change_InfoText("Please Look[IRVS Marker]");
+				//info_text_message = "Please Look[IRVS Marker]";
 				break;
 			case State.Ready:
-				Main.Main_Change_InfoText("Ready to Previewed Reality");
+				if (DBAccessManager.IsConnected()) {
+					Main.Main_Change_InfoText("Ready to Previewed Reality");
+					//info_text_message = "Ready to Previewed Reality";
+				}
+				else {
+					Main.Main_Change_InfoText("Can NOT Connect [" + Main.GetConfig().ros_ip + "]");
+				}
 				break;
 			default:
 				Main.Main_Change_InfoText("Error : " + calibration_state.ToString());
+				//info_text_message = "Error : " + calibration_state.ToString();
 				break;
 		}
+
+		/*
+		if (!DBAccessManager.IsConnected()) {
+			info_text_message += "\nCan't connect to ROS-TMS";
+		}
+		Main.Main_Change_InfoText(info_text_message);
+		*/
 
 		//phase 0
 		//毎回すること
@@ -126,7 +146,7 @@ public class BsenLocalizationSystem : MonoBehaviour {
 			Session.GetTrackables(AugmentedImagesList, TrackableQueryFilter.Updated);
 		}
 
-		//どれだけ手動キャリブしてるか計算
+		//どれだけキャリブレーションしてるか計算
 		Vector3 offset_pos = ARCoreDevice.transform.position - not_offset_pos;
 		float offset_yaw = ARCoreDevice.transform.eulerAngles.y - not_offset_yaw;
 
@@ -135,8 +155,9 @@ public class BsenLocalizationSystem : MonoBehaviour {
 		Main.Calibration_Change_DeviceInfoText("Device Info\n" + "Pos : " + ARCoreDevice.transform.position.ToString("f2") + " Yaw : " + ARCoreDevice.transform.eulerAngles.y.ToString("f2"));
 		Main.Calibration_Change_OffsetInfoText("Offset Info\n" + "Pos : " + offset_pos.ToString("f2") + " Yaw : " + offset_yaw.ToString("f2"));
 
-		//自動キャリブ終了前
+		//位置合わせ終了前
 		if (!IsFinishLocalization()) {
+			//自動位置合わせはMainCanvas表示中のみ
 			if(Main.WhichCanvasActive() == CanvasName.MainCanvas) {
 				switch (calibration_state) {
 					//DBにアクセス開始
@@ -196,7 +217,7 @@ public class BsenLocalizationSystem : MonoBehaviour {
 						}
 						break;
 
-					//画像認識したらキャリブレーションしてモデルを表示
+					//画像認識したら自動位置合わせしてモデルを表示
 					//UnityEditor上ではここはスキップ
 					case State.SearchImage:
 						if (Application.isEditor) {
@@ -222,7 +243,7 @@ public class BsenLocalizationSystem : MonoBehaviour {
 							}
 						}
 
-						//自動キャリブ終了時の位置と回転を保存
+						//自動位置合わせ終了時の位置と回転を保存
 						not_offset_pos = ARCoreDevice.transform.position;
 						not_offset_yaw = ARCoreDevice.transform.eulerAngles.y;
 
@@ -230,109 +251,11 @@ public class BsenLocalizationSystem : MonoBehaviour {
 						break;
 				}
 			}
-			else if(Main.WhichCanvasActive() == CanvasName.SelfLocalizationCanvas) {
-				/*
-				if (!start_self_localization) {
-					SelfLocalizationCanvas.StartSelfLocalization();
-					start_self_localization = true;
-				}
-				*/
-				SelfLocalizationCanvas.StartSelfLocalization();
-
-				//タッチした場所を取得
-				bool is_touched = false;
-				Vector2 touch_position = new Vector2();
-				if (Application.isEditor) {
-					if (Input.GetMouseButton(0)) {
-						if (!EventSystem.current.IsPointerOverGameObject()) {
-							touch_position = Input.mousePosition;
-							touch_position.x = Mathf.Clamp(touch_position.x, 0.0f, Screen.width);
-							touch_position.y = Mathf.Clamp(touch_position.y, 0.0f, Screen.height);
-							//touch_position.z = UICamera.transform.position.y;
-
-							Debug.Log("Touch : " + touch_position.ToString("f0"));
-
-							is_touched = true;
-						}
-					}
-				}
-				else {
-					//Main.SelfLocalization_Change_InfoText("Test1");
-					//Main.SelfLocalization_Change_InfoText("Touch Count : " + Input.touchCount.ToString());
-					if (Input.touchCount > 0) {
-						//Main.SelfLocalization_Change_InfoText("Test2");
-						Touch touch = Input.GetTouch(0);
-						if (touch.phase != TouchPhase.Ended && !EventSystem.current.IsPointerOverGameObject(touch.fingerId)) {
-						//if (touch.phase != TouchPhase.Ended) {
-							//Main.SelfLocalization_Change_InfoText("Test3");
-							//Change_InfoText("False");
-
-							touch_position = touch.position;
-							touch_position.x = Mathf.Clamp(touch_position.x, 0.0f, Screen.width);
-							touch_position.y = Mathf.Clamp(touch_position.y, 0.0f, Screen.height);
-							//touch_position.z = UICamera.transform.position.y;
-
-							//Debug.Log("Touch : " + touch_position.ToString("f0"));
-							//Main.SelfLocalization_Change_InfoText("Touch : " + touch_position.ToString("f0"));
-
-							is_touched = true;
-						}
-					}
-				}
-
-				//Main.SelfLocalization_Change_InfoText("Test Count : " + count++.ToString());
-				switch (SelfLocalizationCanvas.GetState()) {
-					case SelfLocalizationCanvasManager.State.SetPosition:
-						if (is_touched) {
-							Vector3 touch_position_world = SelfLocalizationCanvas.OnSelectPosition(touch_position);
-							//Debug.Log("Touch in world : " + touch_position_world.ToString("f4"));
-							Main.SelfLocalization_Change_InfoText("Position : " + touch_position_world.ToString("f4"));
-
-							SelfLocalization_PositionBuffer = touch_position_world;
-						}
-						break;
-
-					case SelfLocalizationCanvasManager.State.SetDirection:
-						if (is_touched) {
-							float self_localization_direction = SelfLocalizationCanvas.OnSelectDirection(touch_position);
-							Main.SelfLocalization_Change_InfoText("Direction : " + self_localization_direction.ToString());
-
-							SelfLocalization_DirectionBuffer = self_localization_direction;
-						}
-						break;
-
-					case SelfLocalizationCanvasManager.State.SetHeight:
-						SelfLocalization_PositionBuffer.y = SelfLocalizationCanvas.OnSelectHeight();
-
-						GameObject device_object = new GameObject();
-						device_object.transform.position = ARCoreDevice.transform.position;
-						device_object.transform.eulerAngles = ARCoreDevice.transform.eulerAngles;
-
-						GameObject camera_object = new GameObject();
-						camera_object.transform.position = Camera.main.transform.position;
-						camera_object.transform.eulerAngles = Camera.main.transform.eulerAngles;
-
-						device_object.transform.SetParent(camera_object.transform, true);
-
-						camera_object.transform.position = SelfLocalization_PositionBuffer;
-						camera_object.transform.eulerAngles = new Vector3(camera_object.transform.eulerAngles.x, SelfLocalization_DirectionBuffer, camera_object.transform.eulerAngles.z);
-
-						ARCoreDevice.transform.position = device_object.transform.position;
-						ARCoreDevice.transform.eulerAngles = device_object.transform.eulerAngles;
-						break;
-
-					case SelfLocalizationCanvasManager.State.Complete:
-						calibration_state = State.Ready;
-						finish_localization = true;
-
-						SelfLocalizationCanvas.FinishSelfLocalization();
-						break;
-				}
-			}
+			
 		}
-		else { // 自動キャリブ終了後
+		else { //位置合わせ終了後
 			if(Main.WhichCanvasActive() == CanvasName.CalibrationCanvas) {
-				ManualCalibration(); //手動キャリブ
+				ManualCalibration(); //キャリブレーション
 
 				if (CalibrationCanvas.IsChengedDisplayRoomToggle()) {
 					if (CalibrationCanvas.IsOnDisplayToggle()) {
@@ -342,6 +265,122 @@ public class BsenLocalizationSystem : MonoBehaviour {
 						BsenModel.SetActive(false);
 					}
 				}
+			}
+		}
+
+		//手動位置合わせ
+		if (Main.WhichCanvasActive() == CanvasName.SelfLocalizationCanvas) {
+			/*
+			if (!start_self_localization) {
+				SelfLocalizationCanvas.StartSelfLocalization();
+				start_self_localization = true;
+			}
+			*/
+			SelfLocalizationCanvas.StartSelfLocalization();
+
+			//タッチした場所を取得
+			bool is_touched = false;
+			Vector2 touch_position = new Vector2();
+			if (Application.isEditor) {
+				if (Input.GetMouseButton(0)) {
+					if (!EventSystem.current.IsPointerOverGameObject()) {
+						touch_position = Input.mousePosition;
+						touch_position.x = Mathf.Clamp(touch_position.x, 0.0f, Screen.width);
+						touch_position.y = Mathf.Clamp(touch_position.y, 0.0f, Screen.height);
+						//touch_position.z = UICamera.transform.position.y;
+
+						Debug.Log("Touch : " + touch_position.ToString("f0"));
+
+						is_touched = true;
+					}
+				}
+			}
+			else {
+				//Main.SelfLocalization_Change_InfoText("Test1");
+				//Main.SelfLocalization_Change_InfoText("Touch Count : " + Input.touchCount.ToString());
+				if (Input.touchCount > 0) {
+					//Main.SelfLocalization_Change_InfoText("Test2");
+					Touch touch = Input.GetTouch(0);
+					if (touch.phase != TouchPhase.Ended && !EventSystem.current.IsPointerOverGameObject(touch.fingerId)) {
+						//if (touch.phase != TouchPhase.Ended) {
+						//Main.SelfLocalization_Change_InfoText("Test3");
+						//Change_InfoText("False");
+
+						touch_position = touch.position;
+						touch_position.x = Mathf.Clamp(touch_position.x, 0.0f, Screen.width);
+						touch_position.y = Mathf.Clamp(touch_position.y, 0.0f, Screen.height);
+						//touch_position.z = UICamera.transform.position.y;
+
+						//Debug.Log("Touch : " + touch_position.ToString("f0"));
+						//Main.SelfLocalization_Change_InfoText("Touch : " + touch_position.ToString("f0"));
+
+						is_touched = true;
+					}
+				}
+			}
+
+			//Main.SelfLocalization_Change_InfoText("Test Count : " + count++.ToString());
+
+			if(SelfLocalizationCanvas.GetState() != SelfLocalizationCanvasManager.State.SetHeight && self_localization_apply) {
+				self_localization_apply = false;
+			}
+			
+			switch (SelfLocalizationCanvas.GetState()) {
+				case SelfLocalizationCanvasManager.State.SetPosition:
+					if (is_touched) {
+						Vector3 touch_position_world = SelfLocalizationCanvas.OnSelectPosition(touch_position);
+						//Debug.Log("Touch in world : " + touch_position_world.ToString("f4"));
+						Main.SelfLocalization_Change_InfoText("Position : " + touch_position_world.ToString("f4"));
+
+						SelfLocalization_PositionBuffer = touch_position_world;
+					}
+					break;
+
+				case SelfLocalizationCanvasManager.State.SetDirection:
+					if (is_touched) {
+						float self_localization_direction = SelfLocalizationCanvas.OnSelectDirection(touch_position);
+						Main.SelfLocalization_Change_InfoText("Direction : " + self_localization_direction.ToString());
+
+						SelfLocalization_DirectionBuffer = self_localization_direction;
+					}
+					break;
+
+				case SelfLocalizationCanvasManager.State.SetHeight:
+					GameObject device_object = new GameObject();
+					device_object.transform.position = ARCoreDevice.transform.position;
+					device_object.transform.eulerAngles = ARCoreDevice.transform.eulerAngles;
+
+					GameObject camera_object = new GameObject();
+					camera_object.transform.position = Camera.main.transform.position;
+					camera_object.transform.eulerAngles = Camera.main.transform.eulerAngles;
+
+					device_object.transform.SetParent(camera_object.transform, true);
+
+					if (!self_localization_apply) {
+						SelfLocalization_PositionBuffer.y = SelfLocalizationCanvas.OnSelectHeight();
+
+						camera_object.transform.position = SelfLocalization_PositionBuffer;
+						camera_object.transform.eulerAngles = new Vector3(camera_object.transform.eulerAngles.x, SelfLocalization_DirectionBuffer, camera_object.transform.eulerAngles.z);
+
+						self_localization_apply = true;
+
+						BsenModelShader.ChangeToOriginColors(Main.GetConfig().room_alpha);
+					}
+					else {
+						camera_object.transform.position = new Vector3(camera_object.transform.position.x, SelfLocalizationCanvas.OnSelectHeight(), camera_object.transform.position.z);
+					}
+
+					ARCoreDevice.transform.position = device_object.transform.position;
+					ARCoreDevice.transform.eulerAngles = device_object.transform.eulerAngles;
+
+					break;
+
+				case SelfLocalizationCanvasManager.State.Complete:
+					calibration_state = State.Ready;
+					finish_localization = true;
+
+					SelfLocalizationCanvas.FinishSelfLocalization();
+					break;
 			}
 		}
 	}

@@ -194,7 +194,9 @@ public class SelfLocalizationCanvasManager : MonoBehaviour {
 				DirectionImage_Circle.SetActive(false);
 				DirectionImage_Arrow.SetActive(false);
 
-				GameObject.Find("rostms").GetComponent<ShaderChange>().ChangeToOriginColors(Main.GetConfig().room_alpha);
+				//GameObject.Find("rostms").GetComponent<ShaderChange>().ChangeToOriginColors(Main.GetConfig().room_alpha);
+
+				Change_HeightText(SelectHeightSlider.value);
 				break;
 
 			case State.SetHeight:
