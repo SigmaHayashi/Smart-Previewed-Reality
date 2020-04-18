@@ -190,7 +190,7 @@ public class SmartPalControll : MonoBehaviour {
 	 * Update()
 	 *****************************************************************/
 	void Update() {
-		if (!Main.FinishReadConfig() || !CalibrationSystem.FinishCalibration()) {
+		if (!Main.FinishReadConfig() || !CalibrationSystem.IsFinishLocalization()) {
 			return;
 		}
 
