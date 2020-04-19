@@ -48,30 +48,14 @@ public class Values {
 	public int result;
 }
 
-enum Mode {
-	Ready = 0,
-	MOVE = 1,
-	ARM = 2,
-	GRIPPER = 3
-}
-
-enum SafetyLevel {
-	NONE,
-	NOT_MOVE,
-	SAFE,
-	DANGER
-}
-
 
 public class SmartPalControll : MonoBehaviour {
 
 	//UI制御用
 	private MainScript Main;
-	//private MyConsoleCanvasManager MyConsoleCanvas;
-	//private InformationCanvasManager InformationCanvas;
-
+	
 	//キャリブシステム
-	private BsenLocalizationSystem CalibrationSystem;
+	private BsenLocalizationSystem LocalizationSystem;
 
 	//RosSocketClientまわり
 	private RosSocketClient RosSocketClient;
@@ -84,20 +68,26 @@ public class SmartPalControll : MonoBehaviour {
 	private readonly string service_type = "tms_msg_rp/rps_path_server";
 
 	private readonly string service_name_voronoi = "rps_voronoi_path_planning";
-	//private readonly string service_type_voronoi = "tms_msg_rp/rps_voronoi_path_planning";
 
 	private readonly string service_name_arm = "sp5_arm_control_uwp";
 	private readonly string service_type_arm = "tms_msg_rc/sp5_control_unity";
 
 	private string service_arm_id;
 	
-	//Previewedの中枢
-	private bool pr_flag = false;
-	//private int mode = 0; // 1: MOVE_ABS or MOVE_REL, 2: MOVE_TRAJECTORY_ARM, 3: MOVE_TRAJECTORY_GRIPPER
+	//Previewed Realityの中枢
+	public enum Mode {
+		Ready = 0,
+		MOVE = 1,
+		ARM = 2,
+		GRIPPER = 3
+	}
 	private Mode mode = Mode.Ready;
+	public Mode GetMode() { return mode; }
+	private bool pr_flag = false;
 	private RpsPosition Goal;
 	private RpsPosition[] SubGoals;
 	private float[] SubGoal;
+	public float[] GetSubGoal() { return SubGoal; }
 	private int path_counter;
 	private readonly float sp5_move_speed = 0.12f;  // [m/s]
 	private float sp5_move_speed_x = 0.1f; // [m/s]
@@ -129,15 +119,24 @@ public class SmartPalControll : MonoBehaviour {
 
 	//色周り
 	private ShaderChange SmartPalShader;
+	/*
 	private Color safe_color = new Color32(60, 180, 230, 170);
 	private Color danger_color = new Color32(200, 0, 0, 170);
-	//private float safety_distance = 2.0f;
+	public enum SafetyLevel {
+		NONE,
+		NOT_MOVE,
+		SAFE,
+		DANGER
+	}
 	private SafetyLevel safety_level = SafetyLevel.NONE;
-	private List<GameObject> SmartPalPartsList = new List<GameObject>();
+	public SafetyLevel GetSafetyLevel() { return safety_level; }
+	*/
+	//private List<GameObject> SmartPalPartsList = new List<GameObject>();
 
 	// 警告UI
-	private AlertCanvasManager AlertManager;
+	//private AlertCanvasManager AlertCanvas;
 	private bool moving = false;
+	public bool IsMoving() { return moving; }
 
 
 	/*****************************************************************
@@ -146,24 +145,14 @@ public class SmartPalControll : MonoBehaviour {
 	void Start() {
 		//各種オブジェクトを取得
 		Main = GameObject.Find("Main System").GetComponent<MainScript>();
-		//MyConsoleCanvas = GameObject.Find("Main System/MyConsole Canvas").GetComponent<MyConsoleCanvasManager>();
-		//InformationCanvas = GameObject.Find("Main System/Information Canvas").GetComponent<InformationCanvasManager>();
-
-		CalibrationSystem = GameObject.Find("Main System").GetComponent<BsenLocalizationSystem>();
+		
+		LocalizationSystem = GameObject.Find("Main System").GetComponent<BsenLocalizationSystem>();
 		RosSocketClient = GameObject.Find("Ros Socket Client").GetComponent<RosSocketClient>();
 		DBAccessManager = GameObject.Find("Ros Socket Client").GetComponent<DBAccessManager>();
 
 		SmartPalShader = transform.gameObject.GetComponent<ShaderChange>();
-		//GetAllChildren(transform.gameObject, ref SmartPalPartsList);
-		SmartPalPartsList = GetAllChildren(transform.gameObject);
-		/*
-		int parts_index = 0;
-		foreach(GameObject parts in SmartPalPartsList) {
-			Debug.Log("Parts Name " + parts_index + " : " + parts.name);
-			parts_index++;
-		}
-		*/
-
+		//SmartPalPartsList = GetAllChildren(transform.gameObject);
+		
 		for(int i = 0; i < 7; i++) {
 			LeftArm_joints[i] = GameObject.Find(string.Format("l_arm_j{0}_link", i + 1));
 			LeftArm_init_quart[i] = LeftArm_joints[i].transform.localRotation;
@@ -182,7 +171,7 @@ public class SmartPalControll : MonoBehaviour {
 		Chipstar = GameObject.Find("chipstar_red");
 		ChipstarShader = Chipstar.GetComponent<ShaderChange>();
 		
-		AlertManager = GameObject.Find("Main System/Alert Canvas").GetComponent<AlertCanvasManager>();
+		//AlertCanvas = GameObject.Find("Main System/Alert Canvas").GetComponent<AlertCanvasManager>();
 	}
 	
 
@@ -190,7 +179,7 @@ public class SmartPalControll : MonoBehaviour {
 	 * Update()
 	 *****************************************************************/
 	void Update() {
-		if (!Main.FinishReadConfig() || !CalibrationSystem.IsFinishLocalization()) {
+		if (!Main.FinishReadConfig() || !LocalizationSystem.IsFinishLocalization()) {
 			return;
 		}
 
@@ -204,11 +193,14 @@ public class SmartPalControll : MonoBehaviour {
 		//最初の1回ポジショントラッキング
 		if (!finish_init_pos) {
 			PositionTracking();
+			/*
 			if (safety_level == SafetyLevel.NONE) {
 				//SmartPalShader.ChangeToOriginColors(0.6f);
 				SmartPalShader.ChangeToOriginColors(Main.GetConfig().robot_alpha);
 				safety_level = SafetyLevel.NOT_MOVE;
 			}
+			*/
+			SmartPalShader.ChangeToOriginColors(Main.GetConfig().robot_alpha);
 		}
 
 		//最初の1回チップスターの位置をデータベースから取得
@@ -218,7 +210,7 @@ public class SmartPalControll : MonoBehaviour {
 
 		/*
 		//キャリブが終わってからポジショントラッキングとバッテリー情報アクセスする
-		if (CalibrationSystem.FinishCalibration()) {
+		if (LocalizationSystem.FinishCalibration()) {
 			PositionTracking();
 			//UpdateBatteryInformation();
 		}
@@ -248,7 +240,7 @@ public class SmartPalControll : MonoBehaviour {
 		}
 
 		if(mode != Mode.Ready) {
-			Sp5ColorManager();
+			//Sp5ColorManager();
 			if (pr_flag) {
 				switch (mode) {
 					case Mode.MOVE:
@@ -266,6 +258,7 @@ public class SmartPalControll : MonoBehaviour {
 				Sp5Sleep(1.8f);
 			}
 		}
+		/*
 		else {
 			if(safety_level != SafetyLevel.NOT_MOVE) {
 				//SmartPalShader.ChangeToOriginColors(0.6f);
@@ -273,7 +266,9 @@ public class SmartPalControll : MonoBehaviour {
 				safety_level = SafetyLevel.NOT_MOVE;
 			}
 		}
+		*/
 
+		/*
 		// 警告UIの表示
 		if (moving) {
 			// SmartPalとSubGoalを結ぶ直線の式(z=ax+b)を計算
@@ -315,25 +310,26 @@ public class SmartPalControll : MonoBehaviour {
 				Debug.Log("Euler to SubGoal : " + euler_to_subgoal);
 
 				if (euler_to_subgoal > -45 && euler_to_subgoal <= 45) {
-					AlertManager.FlashComeFromFront();
+					AlertCanvas.FlashComeFromFront();
 				}
 				else if (euler_to_subgoal > 45 && euler_to_subgoal <= 135) {
-					AlertManager.FlashComeFromLeft();
+					AlertCanvas.FlashComeFromLeft();
 				}
 				else if (euler_to_subgoal <= -45 && euler_to_subgoal > -135) {
-					AlertManager.FlashComeFromRight();
+					AlertCanvas.FlashComeFromRight();
 				}
 				else {
-					AlertManager.FlashComeFromBack();
+					AlertCanvas.FlashComeFromBack();
 				}
 			}
 			else {
-				AlertManager.StopFlash();
+				AlertCanvas.StopFlash();
 			}
 		}
 		else {
-			AlertManager.StopFlash();
+			AlertCanvas.StopFlash();
 		}
+		*/
 
 		// Information Canvasの更新
 		Main.Information_Update_VirtualCameraInfoText(Camera.main.transform.position, Camera.main.transform.eulerAngles);
@@ -907,6 +903,7 @@ public class SmartPalControll : MonoBehaviour {
 	/*****************************************************************
 	 * 色の変更をマネジメントする
 	 *****************************************************************/
+	/*
 	private void Sp5ColorManager() {
 		float min_distance = CalcDistance(transform.gameObject, Camera.main.transform.gameObject);
 		foreach(GameObject parts in SmartPalPartsList) {
@@ -929,22 +926,12 @@ public class SmartPalControll : MonoBehaviour {
 			}
 		}
 	}
+	*/
 
 	/*****************************************************************
 	 * すべての子オブジェクトを取得
 	 *****************************************************************/
 	/*
-	private void GetAllChildren(GameObject parent, ref List<GameObject> childrens) {
-		Transform children = parent.GetComponentInChildren<Transform>();
-		if (children.childCount == 0) {
-			return;
-		}
-		foreach (Transform ob in children) {
-			childrens.Add(ob.gameObject);
-			GetAllChildren(ob.gameObject, ref childrens);
-		}
-	}
-	*/
 	private List<GameObject> GetAllChildren(GameObject parent) {
 		List<GameObject> children_list = new List<GameObject>();
 		Transform children = parent.GetComponentInChildren<Transform>();
@@ -957,6 +944,7 @@ public class SmartPalControll : MonoBehaviour {
 		}
 		return children_list;
 	}
+	*/
 
 	/*****************************************************************
 	 * オブジェクトどうしの距離を計算
