@@ -10,78 +10,20 @@ public class AlertManager : MonoBehaviour {
 	//キャリブシステム
 	private BsenLocalizationSystem LocalizationSystem;
 
-	//RosSocketClientまわり
-	//private RosSocketClient RosSocketClient;
-
-	//Previewed Realityの中枢
-	/*
-	public enum Mode {
-		Ready = 0,
-		MOVE = 1,
-		ARM = 2,
-		GRIPPER = 3
-	}
-	private Mode mode = Mode.Ready;
-	*/
-	//private bool pr_flag = false;
-	/*
-	private RpsPosition Goal;
-	private RpsPosition[] SubGoals;
-	private float[] SubGoal;
-	private int path_counter;
-	private readonly float sp5_move_speed = 0.12f;  // [m/s]
-	private float sp5_move_speed_x = 0.1f; // [m/s]
-	private float sp5_move_speed_y = 0.1f; // [m/s]
-	private readonly float sp5_rot_speed = 0.16f;   // [rad/s]
-	*/
-	//Armまわり
-	/*
-	private readonly GameObject[] LeftArm_joints = new GameObject[8];
-	private GameObject LeftGripper;
-	private GameObject LeftEndEffector;
-	private readonly Quaternion[] LeftArm_init_quart = new Quaternion[8];
-	private readonly Quaternion[] LeftArm_target_quart = new Quaternion[8];
-	private readonly float sp5_arm_speed = 0.175f; // [rad/s]
-	private readonly float sp5_gripper_speed = 0.175f; // [rad/s]
-	private int grasping = 0;
-	*/
-
-	//ChipStar
-	/*
-	private GameObject Chipstar;
-	private ShaderChange ChipstarShader;
-	*/
-
-	// スクリプト制御
-	/*
-	private bool finish_setting = false;
-	public bool IsFinishSetting() { return finish_setting; }
-	*/
-
-	/*
-	private bool finish_init_pos = false;
-	private bool finish_init_chipstar_pos = false;
-	*/
-
-	//private float sleep_time = 0.0f;
-
 	//色周り
 	private ShaderChange SmartPalShader;
 	private Color safe_color = new Color32(60, 180, 230, 170);
 	private Color danger_color = new Color32(200, 0, 0, 170);
 	enum SafetyLevel {
-		//NONE,
 		NOT_MOVE,
 		SAFE,
 		DANGER
 	}
-	//private SafetyLevel safety_level = SafetyLevel.NONE;
 	private SafetyLevel safety_level = SafetyLevel.NOT_MOVE;
 
 	// 警告UI
 	private AlertCanvasManager AlertCanvas;
-	//private bool moving = false;
-
+	
 	//SmartPal
 	private GameObject SmartPalObject;
 	private SmartPalControll SmartPal;
@@ -122,10 +64,8 @@ public class AlertManager : MonoBehaviour {
 		}
 
 		// 警告UIの表示
-		//if (moving) {
 		if (SmartPal.IsMoving()) {
 			// SmartPalとSubGoalを結ぶ直線の式(z=ax+b)を計算
-			//Vector3 SubGoal_Unity_pos = Ros2UnityPosition(new Vector3(SubGoal[0], SubGoal[1], 0.0f));
 			Vector3 SubGoal_Unity_pos = Ros2UnityPosition(new Vector3(SmartPal.GetSubGoal()[0], SmartPal.GetSubGoal()[1], 0.0f));
 			float to_subgoal_line_a = (SubGoal_Unity_pos.z - SmartPalObject.transform.position.z) / (SubGoal_Unity_pos.x - SmartPalObject.transform.position.x);
 			float to_subgoal_line_b = to_subgoal_line_a * SmartPalObject.transform.position.x * -1 + SmartPalObject.transform.position.z;

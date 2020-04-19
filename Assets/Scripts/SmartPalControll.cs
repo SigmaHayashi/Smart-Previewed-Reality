@@ -119,22 +119,8 @@ public class SmartPalControll : MonoBehaviour {
 
 	//色周り
 	private ShaderChange SmartPalShader;
-	/*
-	private Color safe_color = new Color32(60, 180, 230, 170);
-	private Color danger_color = new Color32(200, 0, 0, 170);
-	public enum SafetyLevel {
-		NONE,
-		NOT_MOVE,
-		SAFE,
-		DANGER
-	}
-	private SafetyLevel safety_level = SafetyLevel.NONE;
-	public SafetyLevel GetSafetyLevel() { return safety_level; }
-	*/
-	//private List<GameObject> SmartPalPartsList = new List<GameObject>();
-
+	
 	// 警告UI
-	//private AlertCanvasManager AlertCanvas;
 	private bool moving = false;
 	public bool IsMoving() { return moving; }
 
@@ -151,7 +137,6 @@ public class SmartPalControll : MonoBehaviour {
 		DBAccessManager = GameObject.Find("Ros Socket Client").GetComponent<DBAccessManager>();
 
 		SmartPalShader = transform.gameObject.GetComponent<ShaderChange>();
-		//SmartPalPartsList = GetAllChildren(transform.gameObject);
 		
 		for(int i = 0; i < 7; i++) {
 			LeftArm_joints[i] = GameObject.Find(string.Format("l_arm_j{0}_link", i + 1));
@@ -170,8 +155,6 @@ public class SmartPalControll : MonoBehaviour {
 
 		Chipstar = GameObject.Find("chipstar_red");
 		ChipstarShader = Chipstar.GetComponent<ShaderChange>();
-		
-		//AlertCanvas = GameObject.Find("Main System/Alert Canvas").GetComponent<AlertCanvasManager>();
 	}
 	
 
@@ -193,13 +176,6 @@ public class SmartPalControll : MonoBehaviour {
 		//最初の1回ポジショントラッキング
 		if (!finish_init_pos) {
 			PositionTracking();
-			/*
-			if (safety_level == SafetyLevel.NONE) {
-				//SmartPalShader.ChangeToOriginColors(0.6f);
-				SmartPalShader.ChangeToOriginColors(Main.GetConfig().robot_alpha);
-				safety_level = SafetyLevel.NOT_MOVE;
-			}
-			*/
 			SmartPalShader.ChangeToOriginColors(Main.GetConfig().robot_alpha);
 		}
 
@@ -207,14 +183,6 @@ public class SmartPalControll : MonoBehaviour {
 		if (!finish_init_chipstar_pos) {
 			InitChipstarPosition();
 		}
-
-		/*
-		//キャリブが終わってからポジショントラッキングとバッテリー情報アクセスする
-		if (LocalizationSystem.FinishCalibration()) {
-			PositionTracking();
-			//UpdateBatteryInformation();
-		}
-		*/
 
 		KeyValuePair<bool, string> request = RosSocketClient.GetServiceRequestMessage(service_name); // ROSからのリクエスト
 		if (request.Key) {
@@ -240,7 +208,6 @@ public class SmartPalControll : MonoBehaviour {
 		}
 
 		if(mode != Mode.Ready) {
-			//Sp5ColorManager();
 			if (pr_flag) {
 				switch (mode) {
 					case Mode.MOVE:
@@ -258,78 +225,6 @@ public class SmartPalControll : MonoBehaviour {
 				Sp5Sleep(1.8f);
 			}
 		}
-		/*
-		else {
-			if(safety_level != SafetyLevel.NOT_MOVE) {
-				//SmartPalShader.ChangeToOriginColors(0.6f);
-				SmartPalShader.ChangeToOriginColors(Main.GetConfig().robot_alpha);
-				safety_level = SafetyLevel.NOT_MOVE;
-			}
-		}
-		*/
-
-		/*
-		// 警告UIの表示
-		if (moving) {
-			// SmartPalとSubGoalを結ぶ直線の式(z=ax+b)を計算
-			Vector3 SubGoal_Unity_pos = Ros2UnityPosition(new Vector3(SubGoal[0], SubGoal[1], 0.0f));
-			float to_subgoal_line_a = (SubGoal_Unity_pos.z - transform.position.z) / (SubGoal_Unity_pos.x - transform.position.x);
-			float to_subgoal_line_b = to_subgoal_line_a * transform.position.x * -1 + transform.position.z;
-			// 直線と直行してカメラを通る直線の式(z=ax+b)を計算 // a = -1/a
-			float camera_to_line_line_b = Camera.main.transform.position.x / to_subgoal_line_a + Camera.main.transform.position.z;
-			// カメラからSmartPalとSubGoalを結ぶ直線の一番近いところ
-			Vector3 near_point = new Vector3() { x = (camera_to_line_line_b - to_subgoal_line_b) / (to_subgoal_line_a + 1 / to_subgoal_line_a) };
-			near_point.z = to_subgoal_line_a * near_point.x + to_subgoal_line_b;
-			if (transform.position.x > SubGoal_Unity_pos.x) {
-				if (near_point.x > transform.position.x) {
-					near_point = transform.position;
-					near_point.y = 0.0f;
-				}
-				else if (near_point.x < SubGoal_Unity_pos.x) {
-					near_point = SubGoal_Unity_pos;
-					near_point.y = 0.0f;
-				}
-			}
-			else {
-				if (near_point.x < transform.position.x) {
-					near_point = transform.position;
-					near_point.y = 0.0f;
-				}
-				else if (near_point.x > SubGoal_Unity_pos.x) {
-					near_point = SubGoal_Unity_pos;
-					near_point.y = 0.0f;
-				}
-			}
-			// 距離を計算
-			float distance_camera_to_near_point = CalcDistance(Camera.main.transform.position, near_point);
-			float distance_camera_to_sp5 = CalcDistance(Camera.main.transform.gameObject, transform.gameObject);
-
-			if (distance_camera_to_near_point < Main.GetConfig().safety_distance && distance_camera_to_near_point < distance_camera_to_sp5) {
-				float euler_to_subgoal = Mathf.Atan2((transform.position.x - Camera.main.transform.position.x) * -1, transform.position.z - Camera.main.transform.position.z) * Mathf.Rad2Deg;
-				euler_to_subgoal = Mathf.DeltaAngle(Camera.main.transform.eulerAngles.y * -1, euler_to_subgoal);
-				Debug.Log("Euler to SubGoal : " + euler_to_subgoal);
-
-				if (euler_to_subgoal > -45 && euler_to_subgoal <= 45) {
-					AlertCanvas.FlashComeFromFront();
-				}
-				else if (euler_to_subgoal > 45 && euler_to_subgoal <= 135) {
-					AlertCanvas.FlashComeFromLeft();
-				}
-				else if (euler_to_subgoal <= -45 && euler_to_subgoal > -135) {
-					AlertCanvas.FlashComeFromRight();
-				}
-				else {
-					AlertCanvas.FlashComeFromBack();
-				}
-			}
-			else {
-				AlertCanvas.StopFlash();
-			}
-		}
-		else {
-			AlertCanvas.StopFlash();
-		}
-		*/
 
 		// Information Canvasの更新
 		Main.Information_Update_VirtualCameraInfoText(Camera.main.transform.position, Camera.main.transform.eulerAngles);
@@ -899,52 +794,6 @@ public class SmartPalControll : MonoBehaviour {
 			}
 		}
 	}
-
-	/*****************************************************************
-	 * 色の変更をマネジメントする
-	 *****************************************************************/
-	/*
-	private void Sp5ColorManager() {
-		float min_distance = CalcDistance(transform.gameObject, Camera.main.transform.gameObject);
-		foreach(GameObject parts in SmartPalPartsList) {
-			float distance = CalcDistance(parts, Camera.main.transform.gameObject);
-			if(distance < min_distance) {
-				min_distance = distance;
-			}
-		}
-
-		if(min_distance < Main.GetConfig().safety_distance) {
-			if(safety_level != SafetyLevel.DANGER) {
-				SmartPalShader.ChangeColors(danger_color);
-				safety_level = SafetyLevel.DANGER;
-			}
-		}
-		else {
-			if(safety_level != SafetyLevel.SAFE) {
-				SmartPalShader.ChangeColors(safe_color);
-				safety_level = SafetyLevel.SAFE;
-			}
-		}
-	}
-	*/
-
-	/*****************************************************************
-	 * すべての子オブジェクトを取得
-	 *****************************************************************/
-	/*
-	private List<GameObject> GetAllChildren(GameObject parent) {
-		List<GameObject> children_list = new List<GameObject>();
-		Transform children = parent.GetComponentInChildren<Transform>();
-		if (children.childCount == 0) {
-			return new List<GameObject>();
-		}
-		foreach (Transform children_children in children) {
-			children_list.Add(children_children.gameObject);
-			children_list.AddRange(GetAllChildren(children_children.gameObject));
-		}
-		return children_list;
-	}
-	*/
 
 	/*****************************************************************
 	 * オブジェクトどうしの距離を計算
