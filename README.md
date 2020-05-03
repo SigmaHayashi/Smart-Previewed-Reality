@@ -4,6 +4,7 @@
 # 概要
 ROS-TMSによる，SmartPalの行動計画や，ロボットの動作の物品への影響を物理シミュレーションしたものをARCoreを用いて提示することで，近未来を可視化するAndroidアプリケーション
 
+
 # 必要な環境
 PC1 : Windows10 64bit（アプリケーションビルド用）  
 PC2 : Ubuntu 16（Smart Previewed Reality実行用）  
@@ -44,7 +45,7 @@ Android（動作確認済み） : Pixel 3 XL, Pixel 4 XL
 1. GitHubから任意の場所にダウンロード
 
 1. Unityでプロジェクトを開く
-1. Smart Previewed RealityのSceneを開く
+1. "Smart Previewed Reality"のSceneを開く
 1. File > Build Settingsからビルド環境の設定を開く
 1. Androidを選択し，Switch Platformを選択
 1. Android端末をPCに接続し，Build & Run
@@ -93,20 +94,26 @@ Android（動作確認済み） : Pixel 3 XL, Pixel 4 XL
         * ARCore Supported : **true**
 1. Android端末をPCに接続し，Build & Run
 
+
 # 使い方
 
 ## ROS-TMS for Smart Previewed Realityの実行
 
 実行前に，ROSをインストールしたUbuntuでROS-TMS for Smart Previewed Realityをcatkin_makeしておく必要がある．
 
-ROS-TMS for Smart Previewed Reality : https://github.com/SigmaHayashi/ros_tms  
+ROS-TMS for Smart Previewed Reality : https://github.com/SigmaHayashi/ros_tms_for_smart_previewed_reality
 
 このアプリケーションをフルに利用するためには，B-sen，SmartPal V，Viconが必要である．
 また，データベースを利用するため，mongodbをインストールする必要がある．その他依存関係はROS-TMSのWikiを参照．
+
 Wiki : https://github.com/irvs/ros_tms/wiki
 
-Smart Previewed RealityにはAndroid端末へのプッシュ通知機能があるが，ここでは通知機能を用いない実行方法を説明する．プッシュ通知を利用して使用する場合は以下を参照．  
-tms_ur_notification : [数日中にアップします，少々お待ちください．]()
+Smart Previewed RealityにはAndroid端末へのプッシュ通知機能があるが，ここでは通知機能を用いない実行方法を説明する．プッシュ通知を利用して使用する場合は以下を参照．
+
+tms_ur_notification : https://github.com/SigmaHayashi/ros_tms_for_smart_previewed_reality/tree/master/tms_ur/tms_ur_notification
+
+tms_ur Notification Client : https://github.com/SigmaHayashi/tms_ur-Notification-Client
+
 
 ### 実行手順
 ```
@@ -168,17 +175,17 @@ $ rosrun tms_rc_smartpal_virtual_control smartpal5_virtual_control
 
 Previewed Reality Service Callerアプリを使うためには別のAndroid端末が必要（ARCore対応端末でなくてOK）
 
-Previewed Reality Service Caller : [数日中にアップします，少々お待ちください．]()
+Previewed Reality Service Caller : https://github.com/SigmaHayashi/Previewed-Reality-Service-Caller
 
 * 移動サービス  
     ※SmartPalがキッチンに向かう
-```
-$ rosservice call /tms_ts_master "{rostime: 0, task_id: 8007, robot_id: 2003, object_id: 0, user_id: 0, place_id: 6017, priority: 0}"
-```
+    ```
+    $ rosservice call /tms_ts_master "{rostime: 0, task_id: 8007, robot_id: 2003, object_id: 0, user_id: 0, place_id: 6017, priority: 0}"
+    ```
 
 * 物品取り寄せサービス  
     ※SmartPalがキッチンにあるチップスターを取りに行き，テーブル付近に持っていく  
     ※データベースに格納されている情報次第で動作は変わる
-```
-$ rosservice call /tms_ts_master "{rostime: 0, task_id: 8001, robot_id: 2003, object_id: 7001, user_id: 1001, place_id: 0, priority: 0}"
-```
+    ```
+    $ rosservice call /tms_ts_master "{rostime: 0, task_id: 8001, robot_id: 2003, object_id: 7001, user_id: 1001, place_id: 0, priority: 0}"
+    ```
